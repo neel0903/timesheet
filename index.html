@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Timesheet & Pay Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:      #f5f0e8;
+    --bg2:     #ece6d9;
+    --surface: #fdfaf5;
+    --surface2:#f2ece0;
+    --border:  #d9d0bc;
+    --text:    #2c2416;
+    --muted:   #7a6e5e;
+    --accent:  #5c7a4e;
+    --accent2: #8b4513;
+    --amber:   #c17f3a;
+    --red:     #b04040;
+    --green:   #3d6b35;
+    --shadow:  rgba(80,60,20,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 10% 0%,   rgba(193,127,58,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(92,122,78,0.08)  0%, transparent 55%);
+    color: var(--text);
+    font-family: 'Lato', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+  header { text-align: center; margin-bottom: 40px; }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    color: var(--text);
+  }
+  header h1 em { color: var(--accent); font-style: normal; }
+  header p { color: var(--muted); font-size: 0.88rem; margin-top: 6px; font-weight: 300; }
+
+  #syncBar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; font-size: 0.78rem; margin-top: 10px; font-weight: 700;
+  }
+  #syncBar .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--amber); flex-shrink: 0; transition: background 0.4s;
+  }
+  #syncBar.ok  .dot { background: var(--green); }
+  #syncBar.err .dot { background: var(--red); }
+  #syncBar.ok  #syncMsg { color: var(--green); }
+  #syncBar.err #syncMsg { color: var(--red); }
+  #syncMsg { color: var(--amber); }
+
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; max-width: 1020px; margin: 0 auto;
+  }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 26px 24px; box-shadow: 0 2px 12px var(--shadow);
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--text);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 9px;
+    border-bottom: 1px solid var(--border); padding-bottom: 12px;
+  }
+  .icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+  }
+  .icon-green  { background: #ddeedd; color: var(--green); }
+  .icon-brown  { background: #f0e4d4; color: var(--accent2); }
+  .icon-amber  { background: #faebd4; color: var(--amber); }
+  .icon-olive  { background: #e4eede; color: var(--accent); }
+
+  label {
+    display: block; font-size: 0.78rem; color: var(--muted);
+    margin-bottom: 5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  input[type="date"], input[type="number"], input[type="text"], select {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'Lato', sans-serif;
+    font-size: 0.95rem; padding: 10px 13px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 14px; -webkit-appearance: none; appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(92,122,78,0.12); background: #fff;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .btn-primary {
+    cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700;
+    border: none; border-radius: 8px; padding: 12px 20px;
+    font-size: 0.9rem; width: 100%; margin-top: 4px;
+    background: var(--accent); color: #fff; letter-spacing: 0.4px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { background: var(--green); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-filter {
+    cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700;
+    border: none; border-radius: 8px; padding: 10px 16px;
+    font-size: 0.85rem; background: var(--amber); color: #fff;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .btn-filter:hover { background: var(--accent2); }
+
+  .btn-calc {
+    cursor: pointer; font-family: 'Lato', sans-serif; font-weight: 700;
+    border: none; border-radius: 8px; padding: 12px 20px;
+    font-size: 0.9rem; width: 100%; margin-top: 4px;
+    background: var(--accent2); color: #fff;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-calc:hover { background: #6b3010; transform: translateY(-1px); }
+
+  .btn-small {
+    cursor: pointer; background: transparent;
+    border: 1px solid var(--border); color: var(--muted);
+    padding: 4px 9px; font-size: 0.72rem; border-radius: 6px;
+    font-family: 'Lato', sans-serif; transition: all 0.15s;
+  }
+  .btn-small:hover { border-color: var(--red); color: var(--red); }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .stat-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 12px; text-align: center;
+  }
+  .stat-box .val { font-family: 'Playfair Display', serif; font-size: 1.55rem; color: var(--accent); line-height: 1.1; }
+  .stat-box .lbl { font-size: 0.7rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; }
+
+  .filter-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-row > div { flex: 1; min-width: 110px; }
+  .filter-row > div label { margin-bottom: 5px; }
+  .filter-row > div input { margin-bottom: 0; }
+
+  .pay-result {
+    background: linear-gradient(135deg, #fdf6ec 0%, #f5ede0 100%);
+    border: 1px solid #d4b896; border-radius: 10px;
+    padding: 18px; margin-top: 14px; display: none;
+  }
+  .pay-result.visible { display: block; }
+  .pay-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px dashed var(--border); font-size: 0.875rem;
+  }
+  .pay-row:last-child { border-bottom: none; }
+  .pay-row .pay-lbl { color: var(--muted); }
+  .pay-row .pay-val { font-weight: 700; color: var(--text); }
+  .pay-total-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 4px; }
+  .pay-total-row .pay-lbl { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--text); }
+  .pay-total-row .pay-val { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--green); }
+
+  .compare-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-top: 6px; }
+  .compare-match { background: #ddeedd; color: var(--green); }
+  .compare-over  { background: #faebd4; color: var(--amber); }
+  .compare-under { background: #f0dede; color: var(--red); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .table-wrap { grid-column: 1 / -1; overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  thead tr { border-bottom: 2px solid var(--border); }
+  th { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 14px; text-align: left; font-weight: 700; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--bg2); vertical-align: middle; }
+  tr:hover td { background: var(--bg2); }
+
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .badge-ok   { background: #ddeedd; color: var(--green); }
+  .badge-low  { background: #f0dede; color: var(--red); }
+  .badge-over { background: #faebd4; color: var(--amber); }
+
+  .empty-state { text-align: center; padding: 36px; color: var(--muted); font-size: 0.85rem; font-style: italic; }
+  .validation-msg { font-size: 0.78rem; color: var(--red); margin-top: -10px; margin-bottom: 10px; display: none; }
+  .week-info { font-size: 0.76rem; margin-top: -10px; margin-bottom: 12px; }
+  .subsection { border-bottom: none; padding-bottom: 0; margin-bottom: 12px; margin-top: 4px; font-size: 0.92rem; }
+
+  .currency-wrap { position: relative; }
+  .currency-wrap .sym { position: absolute; left: 13px; top: 11px; color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+  .currency-wrap input { padding-left: 24px; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--accent); color: #fff; font-weight: 700;
+    padding: 11px 26px; border-radius: 50px; font-size: 0.875rem;
+    transition: transform 0.3s ease; z-index: 999;
+    box-shadow: 0 4px 16px rgba(92,122,78,0.35);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Timesheet <em>&</em> Pay Tracker</h1>
+  <p>Log weekly hours · Compare with your payslip · Data saved to the cloud</p>
+  <div id="syncBar">
+    <div class="dot"></div>
+    <span id="syncMsg">Connecting to cloud…</span>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- PANEL 1: Log Hours -->
+  <div class="card">
+    <div class="card-title"><span class="icon icon-green">✏️</span> Log Weekly Hours</div>
+
+    <label>Week Ending Date (Sunday)</label>
+    <input type="date" id="weekDate"/>
+    <div class="week-info" id="weekInfo"></div>
+    <div class="validation-msg" id="dateErr">⚠ Please select a Sunday date</div>
+
+    <div class="field-row">
+      <div>
+        <label>Regular Hours</label>
+        <input type="number" id="regHours" min="0" max="168" step="0.5" placeholder="e.g. 37.5"/>
+      </div>
+      <div>
+        <label>Overtime Hours</label>
+        <input type="number" id="otHours" min="0" max="60" step="0.5" placeholder="e.g. 0"/>
+      </div>
+    </div>
+    <div class="validation-msg" id="hoursErr">⚠ Regular hours must be between 0 and 168</div>
+
+    <label>Notes (optional)</label>
+    <input type="text" id="notes" placeholder="e.g. Bank holiday, WFH week…"/>
+
+    <button class="btn-primary" id="saveBtn" onclick="saveEntry()">Save Week →</button>
+  </div>
+
+  <!-- PANEL 2: Summary + Filter + Pay -->
+  <div class="card">
+
+    <div class="card-title"><span class="icon icon-olive">📊</span> All-Time Summary</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="val" id="totalHoursAll">—</div><div class="lbl">Total Hours</div></div>
+      <div class="stat-box"><div class="val" id="totalWeeks">—</div><div class="lbl">Weeks Logged</div></div>
+      <div class="stat-box"><div class="val" id="avgHours">—</div><div class="lbl">Avg / Week</div></div>
+      <div class="stat-box"><div class="val" id="totalOT">—</div><div class="lbl">Overtime Hrs</div></div>
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="card-title subsection"><span class="icon icon-amber">📅</span> Filter by Date Range</div>
+    <div class="filter-row">
+      <div><label>From</label><input type="date" id="filterFrom"/></div>
+      <div><label>To</label><input type="date" id="filterTo"/></div>
+      <button class="btn-filter" onclick="applyFilter()">Apply</button>
+    </div>
+    <div class="stats-grid" style="margin-bottom:0">
+      <div class="stat-box"><div class="val" id="filteredHours">—</div><div class="lbl">Hours in Range</div></div>
+      <div class="stat-box"><div class="val" id="filteredWeeks">—</div><div class="lbl">Weeks in Range</div></div>
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="card-title subsection"><span class="icon icon-brown">💷</span> Pay Calculator</div>
+
+    <label>Calculate Using</label>
+    <select id="paySource" onchange="onPaySourceChange()">
+      <option value="alltime">All-Time Total Hours</option>
+      <option value="filtered">Filtered Date Range Hours</option>
+      <option value="manual">Enter Hours Manually</option>
+    </select>
+
+    <div id="manualHoursWrap" style="display:none">
+      <label>Hours (manual)</label>
+      <input type="number" id="manualHours" min="0" step="0.5" placeholder="Enter total hours…"/>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label>Regular Pay Rate (£/hr)</label>
+        <div class="currency-wrap"><span class="sym">£</span>
+          <input type="number" id="payRate" min="0" step="0.01" placeholder="e.g. 12.50"/>
+        </div>
+      </div>
+      <div>
+        <label>OT Rate (£/hr, optional)</label>
+        <div class="currency-wrap"><span class="sym">£</span>
+          <input type="number" id="otRate" min="0" step="0.01" placeholder="e.g. 18.75"/>
+        </div>
+      </div>
+    </div>
+
+    <label>Your Actual Payslip Amount (£, optional)</label>
+    <div class="currency-wrap"><span class="sym">£</span>
+      <input type="number" id="payslipAmt" min="0" step="0.01" placeholder="Enter to compare with calculated pay"/>
+    </div>
+
+    <button class="btn-calc" onclick="calculatePay()">Calculate Pay 💷</button>
+
+    <div class="pay-result" id="payResult">
+      <div class="pay-row"><span class="pay-lbl" id="regLabel">Regular pay</span><span class="pay-val" id="regPay">—</span></div>
+      <div class="pay-row"><span class="pay-lbl" id="otLabel">Overtime pay</span><span class="pay-val" id="otPay">—</span></div>
+      <div class="pay-row"><span class="pay-lbl">Hours used</span><span class="pay-val" id="hoursUsed">—</span></div>
+      <div class="pay-total-row"><span class="pay-lbl">Calculated Total</span><span class="pay-val" id="totalPay">£0.00</span></div>
+      <div id="compareWrap" style="display:none; border-top:1px dashed var(--border); margin-top:8px; padding-top:4px;">
+        <div class="pay-row"><span class="pay-lbl">Your Payslip</span><span class="pay-val" id="payslipDisplay">—</span></div>
+        <div class="pay-row"><span class="pay-lbl">Difference</span><span class="pay-val" id="diffDisplay">—</span></div>
+        <span class="compare-badge" id="compareBadge"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PANEL 3: History -->
+  <div class="card table-wrap">
+    <div class="card-title"><span class="icon icon-olive">📋</span> Weekly History</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Week Ending</th><th>Regular Hrs</th><th>Overtime</th>
+          <th>Total Hrs</th><th>Notes</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState">Loading data from cloud…</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK (compat build — works in plain HTML, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ── Firebase init ──────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:            "AIzaSyDglC8yJtLMzCtwTJavnsBRwDevI0Ua3I8",
+  authDomain:        "timesheet-tracker-6792f.firebaseapp.com",
+  projectId:         "timesheet-tracker-6792f",
+  storageBucket:     "timesheet-tracker-6792f.firebasestorage.app",
+  messagingSenderId: "107344940471",
+  appId:             "1:107344940471:web:aac4daf612676ae88a6c32"
+});
+
+const db  = firebase.firestore();
+const COL = "timesheet_entries";
+
+// ── Sync bar ───────────────────────────────────────────────────────────────
+const syncBar = document.getElementById('syncBar');
+const syncMsg = document.getElementById('syncMsg');
+function setSyncOk(m)   { syncBar.className='ok';  syncMsg.textContent=m; }
+function setSyncErr(m)  { syncBar.className='err'; syncMsg.textContent=m; }
+function setSyncWait(m) { syncBar.className='';    syncMsg.textContent=m; }
+
+// ── In-memory cache ────────────────────────────────────────────────────────
+let entries = [];
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const today = new Date();
+  const diff  = (7 - today.getDay()) % 7;
+  const sun   = new Date(today);
+  sun.setDate(today.getDate() + diff);
+  document.getElementById('weekDate').value = sun.toISOString().split('T')[0];
+  updateWeekInfo();
+  loadEntries();
+};
+
+// ── Load from Firestore ────────────────────────────────────────────────────
+async function loadEntries() {
+  setSyncWait('Loading from cloud…');
+  try {
+    const snap = await db.collection(COL).orderBy('date','desc').get();
+    entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    setSyncOk('Cloud connected ✓');
+    renderAll();
+  } catch(e) {
+    setSyncErr('Cloud error — check Firestore rules');
+    document.getElementById('emptyState').textContent =
+      'Could not load data. Make sure Firestore is in Test Mode (see setup steps).';
+    console.error(e);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const fmt  = n => Number(n).toFixed(1);
+const fmtM = n => '£' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const isSunday = s => new Date(s+'T00:00:00').getDay() === 0;
+
+function updateWeekInfo() {
+  const val = document.getElementById('weekDate').value;
+  const el  = document.getElementById('weekInfo');
+  if (!val) return;
+  const d = new Date(val+'T00:00:00');
+  if (isSunday(val)) {
+    el.style.color = 'var(--accent)';
+    el.textContent = '✓ ' + d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  } else {
+    el.style.color = 'var(--red)';
+    el.textContent = '✗ ' + d.toLocaleDateString('en-GB',{weekday:'long'}) + ' — please pick a Sunday';
+  }
+}
+document.getElementById('weekDate').addEventListener('change', updateWeekInfo);
+
+// ── Save ───────────────────────────────────────────────────────────────────
+async function saveEntry() {
+  const dateVal = document.getElementById('weekDate').value;
+  const reg     = parseFloat(document.getElementById('regHours').value) || 0;
+  const ot      = parseFloat(document.getElementById('otHours').value)  || 0;
+  const notes   = document.getElementById('notes').value.trim();
+  let valid = true;
+
+  if (!dateVal || !isSunday(dateVal)) {
+    document.getElementById('dateErr').style.display='block'; valid=false;
+  } else { document.getElementById('dateErr').style.display='none'; }
+
+  if (reg < 0 || reg > 168) {
+    document.getElementById('hoursErr').style.display='block'; valid=false;
+  } else { document.getElementById('hoursErr').style.display='none'; }
+
+  if (!valid) return;
+
+  const existing = entries.find(e => e.date === dateVal);
+  if (existing && !confirm('An entry for this week already exists. Replace it?')) return;
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  setSyncWait('Saving to cloud…');
+
+  try {
+    const payload = { date: dateVal, reg, ot, notes };
+    if (existing) {
+      await db.collection(COL).doc(existing.id).set(payload);
+    } else {
+      await db.collection(COL).add(payload);
+    }
+    document.getElementById('regHours').value = '';
+    document.getElementById('otHours').value  = '';
+    document.getElementById('notes').value    = '';
+    showToast('Week saved to cloud ✓');
+    await loadEntries();
+  } catch(e) {
+    setSyncErr('Save failed — ' + e.message);
+    showToast('Save failed. Check your connection.');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Week →';
+  }
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────────
+async function deleteEntry(id, label) {
+  if (!confirm('Delete entry for ' + label + '?')) return;
+  setSyncWait('Deleting…');
+  try {
+    await db.collection(COL).doc(id).delete();
+    showToast('Entry removed');
+    await loadEntries();
+  } catch(e) {
+    setSyncErr('Delete failed — ' + e.message);
+    console.error(e);
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderAll() {
+  const totalReg = entries.reduce((s,e)=>s+e.reg,0);
+  const totalOT  = entries.reduce((s,e)=>s+e.ot,0);
+  const total    = totalReg + totalOT;
+  const weeks    = entries.length;
+
+  document.getElementById('totalHoursAll').textContent = fmt(total);
+  document.getElementById('totalWeeks').textContent    = weeks;
+  document.getElementById('avgHours').textContent      = weeks ? fmt(total/weeks) : '0.0';
+  document.getElementById('totalOT').textContent       = fmt(totalOT);
+
+  const tbody = document.getElementById('historyBody');
+  const empty = document.getElementById('emptyState');
+
+  if (!entries.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent   = 'No entries yet — log your first week above ↑';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = entries.map(e => {
+    const tot = e.reg + e.ot;
+    const d   = new Date(e.date+'T00:00:00');
+    const dsp = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const badge = tot>=37&&tot<=45
+      ? '<span class="badge badge-ok">Normal</span>'
+      : tot<37
+        ? '<span class="badge badge-low">Short</span>'
+        : '<span class="badge badge-over">Long</span>';
+    return `<tr>
+      <td><strong>${dsp}</strong></td>
+      <td>${fmt(e.reg)}</td>
+      <td>${e.ot>0?'<span style="color:var(--amber)">+'+fmt(e.ot)+'</span>':'—'}</td>
+      <td><strong>${fmt(tot)}</strong></td>
+      <td style="color:var(--muted);font-size:0.82rem">${e.notes||'—'}</td>
+      <td>${badge}</td>
+      <td><button class="btn-small" onclick="deleteEntry('${e.id}','${dsp}')">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Filter ─────────────────────────────────────────────────────────────────
+function applyFilter() {
+  const from = document.getElementById('filterFrom').value;
+  const to   = document.getElementById('filterTo').value;
+  if (!from||!to) { showToast('Please select both From and To dates'); return; }
+  const f     = entries.filter(e=>e.date>=from&&e.date<=to);
+  const total = f.reduce((s,e)=>s+e.reg+e.ot,0);
+  document.getElementById('filteredHours').textContent = fmt(total);
+  document.getElementById('filteredWeeks').textContent = f.length;
+  document.getElementById('paySource').value = 'filtered';
+  onPaySourceChange();
+  showToast('Filter applied — '+f.length+' week(s) found');
+}
+
+// ── Pay calculator ─────────────────────────────────────────────────────────
+function onPaySourceChange() {
+  document.getElementById('manualHoursWrap').style.display =
+    document.getElementById('paySource').value === 'manual' ? 'block' : 'none';
+}
+
+function getHoursForPay() {
+  const src = document.getElementById('paySource').value;
+  if (src==='alltime') return { reg:entries.reduce((s,e)=>s+e.reg,0), ot:entries.reduce((s,e)=>s+e.ot,0), label:'all-time' };
+  if (src==='filtered') {
+    const from=document.getElementById('filterFrom').value, to=document.getElementById('filterTo').value;
+    if (!from||!to) { showToast('Please apply a date filter first'); return null; }
+    const f=entries.filter(e=>e.date>=from&&e.date<=to);
+    return { reg:f.reduce((s,e)=>s+e.reg,0), ot:f.reduce((s,e)=>s+e.ot,0), label:'filtered range' };
+  }
+  const h=parseFloat(document.getElementById('manualHours').value);
+  if (!h||h<=0) { showToast('Please enter hours for manual calculation'); return null; }
+  return { reg:h, ot:0, label:'manual' };
+}
+
+function calculatePay() {
+  const hrs  = getHoursForPay(); if (!hrs) return;
+  const rate = parseFloat(document.getElementById('payRate').value);
+  const otR  = parseFloat(document.getElementById('otRate').value);
+  if (!rate||rate<=0) { showToast('Please enter a regular pay rate'); return; }
+
+  const regPay = hrs.reg * rate;
+  const otPay  = hrs.ot>0 ? hrs.ot*(otR>0?otR:rate) : 0;
+  const total  = regPay + otPay;
+
+  document.getElementById('regLabel').textContent = `Regular (${fmt(hrs.reg)} hrs × £${rate.toFixed(2)})`;
+  document.getElementById('regPay').textContent   = fmtM(regPay);
+  if (hrs.ot>0) {
+    const ur=otR>0?otR:rate;
+    document.getElementById('otLabel').textContent = `Overtime (${fmt(hrs.ot)} hrs × £${ur.toFixed(2)})`;
+    document.getElementById('otPay').textContent   = fmtM(otPay);
+  } else {
+    document.getElementById('otLabel').textContent = 'Overtime pay';
+    document.getElementById('otPay').textContent   = '—';
+  }
+  document.getElementById('hoursUsed').textContent = `${fmt(hrs.reg+hrs.ot)} hrs (${hrs.label})`;
+  document.getElementById('totalPay').textContent  = fmtM(total);
+
+  const slip=parseFloat(document.getElementById('payslipAmt').value);
+  const cw=document.getElementById('compareWrap');
+  if (slip>0) {
+    cw.style.display='block';
+    const diff=slip-total, abs=Math.abs(diff);
+    document.getElementById('payslipDisplay').textContent = fmtM(slip);
+    document.getElementById('diffDisplay').textContent    = (diff>=0?'+':'-')+fmtM(abs);
+    const b=document.getElementById('compareBadge');
+    if (abs<1)    { b.className='compare-badge compare-match'; b.textContent='✓ Your payslip matches the calculation'; }
+    else if(diff>0){ b.className='compare-badge compare-over';  b.textContent=`Payslip is ${fmtM(abs)} more — possible bonus/deductions?`; }
+    else           { b.className='compare-badge compare-under'; b.textContent=`Payslip is ${fmtM(abs)} less — worth checking with payroll`; }
+  } else { cw.style.display='none'; }
+
+  document.getElementById('payResult').classList.add('visible');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
