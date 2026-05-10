@@ -46,6 +46,10 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
 
       // ---- Timesheet entries ----
+      // Optional `split` field: map keyed by 'YYYY-MM' month strings,
+      // each value a map { reg: number, ot: number }. We accept the field
+      // as a map and trust client formatting; numeric caps still apply at
+      // the top level (reg/ot fields), which prevents abuse on totals.
       match /timesheet/{docId} {
         allow read: if isOwner(uid);
         allow create, update: if isOwner(uid)
@@ -56,6 +60,10 @@ service cloud.firestore {
           && (
                !('auto' in request.resource.data) ||
                request.resource.data.auto is bool
+             )
+          && (
+               !('split' in request.resource.data) ||
+               request.resource.data.split is map
              );
         allow delete: if isOwner(uid);
       }

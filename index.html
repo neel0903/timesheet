@@ -1467,10 +1467,19 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
     <div class="field-help" id="weekInfo"></div>
     <div class="field-err" id="dateErr">Please select a Sunday</div>
     <div class="form-group">
-      <div class="form-row"><label>Regular hrs</label><div class="field"><input type="number" id="regHours" inputmode="decimal" step="0.5" placeholder="37.5"/></div></div>
-      <div class="form-row"><label>Overtime hrs</label><div class="field"><input type="number" id="otHours" inputmode="decimal" step="0.5" placeholder="0"/></div></div>
+      <div class="form-row"><label>Regular hrs</label><div class="field"><input type="number" id="regHours" inputmode="decimal" step="0.5" placeholder="0" oninput="onHoursChange()"/></div></div>
+      <div class="form-row"><label>Overtime hrs</label><div class="field"><input type="number" id="otHours" inputmode="decimal" step="0.5" placeholder="0" oninput="onHoursChange()"/></div></div>
     </div>
     <div class="field-err" id="hoursErr">Hours must be 0–168</div>
+
+    <!-- SPLIT-WEEK SECTION (shown only when work week crosses a month boundary) -->
+    <div id="splitSection" style="display:none">
+      <div class="section-title" style="margin:14px 4px 8px;">Split across months</div>
+      <div class="field-help" id="splitInfo" style="margin:0 4px 8px;"></div>
+      <div class="form-group" id="splitRows"></div>
+      <div class="field-err" id="splitErr" style="display:none;">Hours per month must total the regular and overtime entered above.</div>
+    </div>
+
     <div class="form-group">
       <div class="form-row"><label>Notes</label><div class="field"><input type="text" id="tsNotes" placeholder="optional"/></div></div>
     </div>
@@ -1615,8 +1624,25 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
     <div class="form-group">
       <div class="form-row"><label>Signed in as</label><div class="field" id="menuEmail" style="text-align:right;color:var(--muted);"></div></div>
       <div class="form-row" onclick="openCatManager()" style="cursor:pointer;"><label>Manage categories</label><div class="field" style="text-align:right;color:var(--muted);">→</div></div>
+      <div class="form-row" onclick="openAutoCleanup()" style="cursor:pointer;"><label>Clean up auto-filled weeks</label><div class="field" style="text-align:right;color:var(--muted);">→</div></div>
     </div>
     <button class="btn btn-red btn-full" onclick="doSignOut()" style="margin-top:14px;">Sign Out</button>
+  </div>
+</div>
+
+<!-- AUTO CLEANUP SHEET -->
+<div class="sheet-bg" id="autoCleanBg" onclick="closeSheet('autoClean')"></div>
+<div class="sheet" id="autoClean">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('autoClean')">Close</button>
+    <div class="sheet-title">Auto-Filled Weeks</div>
+    <span style="width:48px;"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="field-help" style="margin:0 0 12px;">Older versions of this app auto-created 37.5h placeholder entries for missing weeks. Below is every entry currently flagged as auto-created. Tap each to delete, or use "Delete All".</div>
+    <div id="autoCleanList"></div>
+    <button class="btn btn-red btn-full" id="autoDelAllBtn" style="margin-top:14px;display:none;" onclick="deleteAllAutoEntries()">Delete All Auto Entries</button>
   </div>
 </div>
 
@@ -1812,14 +1838,55 @@ function rangesOverlap(a1, a2, b1, b2) {
   return a1 <= b2 && b1 <= a2;
 }
 
-/* Sum timesheet hours where the entry's WORK WEEK overlaps [from, to]. */
+/* List the months touched by a work week. Returns array of 'YYYY-MM'. */
+function monthsInWeek(sundayStr) {
+  const [ws, we] = workWeekFor(sundayStr);
+  const monthA = ws.slice(0,7);
+  const monthB = we.slice(0,7);
+  return monthA === monthB ? [monthA] : [monthA, monthB];
+}
+
+/* For a given week ending Sunday, return how many days of its Mon→Sun
+   work week fall inside the given month 'YYYY-MM'. 0..7 */
+function daysInMonthForWeek(sundayStr, monthStr) {
+  const [ws, we] = workWeekFor(sundayStr);
+  let count = 0;
+  const d = new Date(ws+'T00:00:00');
+  const end = new Date(we+'T00:00:00');
+  while (d <= end) {
+    if (ymd(d).slice(0,7) === monthStr) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+/* Sum timesheet hours where the entry's WORK WEEK overlaps [from, to].
+   Honors the entry.split field if present:
+     entry.split = { 'YYYY-MM': { reg, ot } } — explicitly assigns hours
+     to month buckets. When set, only the months whose buckets overlap
+     [from, to] count, and only their assigned hours.
+   Without a split, the whole entry counts if the work week overlaps. */
 function tsHoursInRange(from, to) {
   let reg = 0, ot = 0;
   tsEntries.forEach(e => {
-    const [ws, we] = workWeekFor(e.date);
-    if (rangesOverlap(ws, we, from, to)) {
-      reg += (e.reg || 0);
-      ot  += (e.ot  || 0);
+    if (e.split && typeof e.split === 'object') {
+      // Use explicit split: count only the buckets whose month overlaps [from,to]
+      Object.keys(e.split).forEach(monthStr => {
+        const monStart = monthStr + '-01';
+        const [yy, mm] = monthStr.split('-').map(Number);
+        const lastDay = new Date(yy, mm, 0).getDate();
+        const monEnd = `${monthStr}-${String(lastDay).padStart(2,'0')}`;
+        if (rangesOverlap(monStart, monEnd, from, to)) {
+          reg += (e.split[monthStr].reg || 0);
+          ot  += (e.split[monthStr].ot  || 0);
+        }
+      });
+    } else {
+      const [ws, we] = workWeekFor(e.date);
+      if (rangesOverlap(ws, we, from, to)) {
+        reg += (e.reg || 0);
+        ot  += (e.ot  || 0);
+      }
     }
   });
   return { reg, ot, total: reg + ot };
@@ -1846,7 +1913,6 @@ async function loadAll() {
 
     if (!categories.length) await seedDefaultCategories();
 
-    await processAutoTimesheets();
     await processSubscriptions();
 
     if (autoCreatedAny) {
@@ -2109,30 +2175,13 @@ async function deleteCategory(id) {
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   AUTO-FILL TIMESHEET (background)
+   AUTO-FILL — REMOVED in V4
+   Auto-creation of 37.5h placeholder weeks turned out to inflate timesheet
+   totals beyond what the user actually worked. Users now log every week
+   manually. Entries with auto: true from the old behavior remain in the
+   database; they can be reviewed and removed via "Clean Up Auto Entries"
+   in the menu.
    ════════════════════════════════════════════════════════════════════════ */
-async function processAutoTimesheets() {
-  let start;
-  if (tsEntries.length) {
-    start = tsEntries.reduce((min, e) => (e.date < min ? e.date : min), tsEntries[0].date);
-  } else {
-    const d = new Date(); d.setDate(d.getDate() - 30);
-    start = ymd(d);
-  }
-  const today = new Date(); today.setHours(0,0,0,0);
-  const lastSun = new Date(today);
-  lastSun.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()));
-  if (lastSun < new Date(start+'T00:00:00')) return;
-  const targets = sundaysBetween(start, ymd(lastSun));
-  const have = new Set(tsEntries.map(e => e.date));
-  const missing = targets.filter(d => !have.has(d));
-  if (!missing.length) return;
-  const batch = db.batch();
-  missing.forEach(d => batch.set(tsCol().doc(), { date: d, reg: 37.5, ot: 0, notes: '', auto: true }));
-  await batch.commit();
-  autoCreatedAny = true;
-  showToast(`Auto-added ${missing.length} missed week(s) at 37.5h`);
-}
 
 /* ════════════════════════════════════════════════════════════════════════
    TIMESHEET — UI
@@ -2147,12 +2196,17 @@ function openTsForm(entry) {
     document.getElementById('tsNotes').value  = entry.notes || '';
     document.getElementById('tsEditId').value = entry.id;
     document.getElementById('tsDeleteBtn').style.display = 'block';
+    // Stash existing split (if any) for repopulation when buildSplitUI runs
+    if (entry.split) window._editingSplit = JSON.parse(JSON.stringify(entry.split));
+    else window._editingSplit = null;
   } else {
     document.getElementById('tsFormTitle').textContent = 'Log Week';
     document.getElementById('weekDate').value = ymd(sundayOfWeek(new Date()));
     document.getElementById('tsDeleteBtn').style.display = 'none';
+    window._editingSplit = null;
   }
   updateWeekInfo();
+  buildSplitUI();
   openSheet('tsForm');
 }
 
@@ -2163,6 +2217,11 @@ function cancelTsEdit() {
   document.getElementById('tsEditId').value = '';
   document.getElementById('dateErr').style.display = 'none';
   document.getElementById('hoursErr').style.display = 'none';
+  document.getElementById('splitSection').style.display = 'none';
+  document.getElementById('splitRows').innerHTML = '';
+  document.getElementById('splitErr').style.display = 'none';
+  window._editingSplit = null;
+  window._splitTouched = false;
 }
 
 function updateWeekInfo() {
@@ -2177,6 +2236,116 @@ function updateWeekInfo() {
     el.style.color = 'var(--red)';
     el.textContent = '✗ ' + d.toLocaleDateString('en-US',{weekday:'long'}) + ' — please pick a Sunday';
   }
+  buildSplitUI();
+}
+
+/* When the user picks a Sunday whose Mon→Sun work week crosses a month
+   boundary, render a split-by-month section asking them to attribute
+   the regular and OT hours to each month. Updates live as they type. */
+function buildSplitUI() {
+  const sec   = document.getElementById('splitSection');
+  const rows  = document.getElementById('splitRows');
+  const info  = document.getElementById('splitInfo');
+  const date  = document.getElementById('weekDate').value;
+
+  if (!date || !isSunday(date)) { sec.style.display = 'none'; rows.innerHTML = ''; return; }
+
+  const months = monthsInWeek(date);
+  if (months.length < 2) { sec.style.display = 'none'; rows.innerHTML = ''; return; }
+
+  const mFmt = m => {
+    const [yy, mm] = m.split('-').map(Number);
+    return new Date(yy, mm-1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+  const dayCounts = months.map(m => ({ m, days: daysInMonthForWeek(date, m), label: mFmt(m) }));
+  info.innerHTML = `This work week spans <strong>${dayCounts.map(x => `${x.days} day${x.days===1?'':'s'} in ${x.label}`).join(' and ')}</strong>. Attribute hours to each month so payslip math knows which month they belong to.`;
+
+  const reg = parseFloat(document.getElementById('regHours').value) || 0;
+  const ot  = parseFloat(document.getElementById('otHours').value)  || 0;
+  const split = window._editingSplit;
+
+  rows.innerHTML = dayCounts.map((x, idx) => {
+    let defReg, defOt;
+    if (split && split[x.m]) {
+      defReg = split[x.m].reg ?? '';
+      defOt  = split[x.m].ot  ?? '';
+    } else {
+      // Sensible default: prefill all into the first month, rest at 0
+      defReg = idx === 0 ? reg : 0;
+      defOt  = idx === 0 ? ot  : 0;
+    }
+    return `
+      <div class="form-row">
+        <label>${x.label} <span style="font-weight:400;color:var(--muted);font-size:11px;">(${x.days}d)</span></label>
+        <div class="field">
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);">Reg
+              <input type="number" data-split-month="${x.m}" data-split-kind="reg"
+                     inputmode="decimal" step="0.5" placeholder="0"
+                     style="width:60px;text-align:right;background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-family:inherit;font-size:var(--t-callout);"
+                     value="${defReg}" oninput="onSplitRowChange()"/>
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);">OT
+              <input type="number" data-split-month="${x.m}" data-split-kind="ot"
+                     inputmode="decimal" step="0.5" placeholder="0"
+                     style="width:60px;text-align:right;background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-family:inherit;font-size:var(--t-callout);"
+                     value="${defOt}" oninput="onSplitRowChange()"/>
+            </span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  sec.style.display = 'block';
+  validateSplit();
+}
+
+function onHoursChange() {
+  // When top-line reg/ot changes and a split exists, rebuild the split UI
+  // (auto-redistribute defaults so the user doesn't see stale numbers)
+  const sec = document.getElementById('splitSection');
+  if (sec.style.display === 'block') {
+    // Only auto-rebuild if user hasn't yet edited the split rows
+    if (!window._splitTouched) {
+      window._editingSplit = null;
+      buildSplitUI();
+    } else {
+      validateSplit();
+    }
+  }
+}
+
+function onSplitRowChange() {
+  window._splitTouched = true;
+  validateSplit();
+}
+
+function readSplitFromUI() {
+  const out = {};
+  document.querySelectorAll('[data-split-month]').forEach(input => {
+    const m = input.dataset.splitMonth;
+    const k = input.dataset.splitKind;
+    out[m] = out[m] || { reg: 0, ot: 0 };
+    out[m][k] = parseFloat(input.value) || 0;
+  });
+  return out;
+}
+
+function validateSplit() {
+  const reg  = parseFloat(document.getElementById('regHours').value) || 0;
+  const ot   = parseFloat(document.getElementById('otHours').value)  || 0;
+  const split = readSplitFromUI();
+  let sumReg = 0, sumOt = 0;
+  Object.values(split).forEach(b => { sumReg += b.reg; sumOt += b.ot; });
+  const ok = Math.abs(sumReg - reg) < 0.01 && Math.abs(sumOt - ot) < 0.01;
+  const errEl = document.getElementById('splitErr');
+  if (ok) {
+    errEl.style.display = 'none';
+  } else {
+    errEl.style.display = 'block';
+    errEl.textContent = `Split totals: ${fmt(sumReg)} reg + ${fmt(sumOt)} ot. Should be ${fmt(reg)} reg + ${fmt(ot)} ot.`;
+  }
+  return ok;
 }
 
 async function saveTimesheet() {
@@ -2192,6 +2361,18 @@ async function saveTimesheet() {
   else { document.getElementById('hoursErr').style.display='none'; }
   if (!valid) return;
 
+  // Determine split. If the work week crosses a month boundary we require
+  // the splits to balance. If it doesn't, no split field is stored.
+  const months = monthsInWeek(dateVal);
+  let splitField = null;
+  if (months.length > 1) {
+    if (!validateSplit()) {
+      showToast('Split totals must match regular and overtime hours');
+      return;
+    }
+    splitField = readSplitFromUI();
+  }
+
   let targetId = editId || null;
   if (!editId) {
     const existing = tsEntries.find(e => e.date === dateVal);
@@ -2202,8 +2383,14 @@ async function saveTimesheet() {
   setSyncWait('Saving…');
   try {
     const payload = { date: dateVal, reg, ot, notes, auto: false };
-    if (targetId) await tsCol().doc(targetId).set(payload);
-    else          await tsCol().add(payload);
+    if (splitField) payload.split = splitField;
+    if (targetId) {
+      // If saving without split (single-month week), make sure to clear any old split
+      if (!splitField) await tsCol().doc(targetId).set(payload);
+      else            await tsCol().doc(targetId).set(payload);
+    } else {
+      await tsCol().add(payload);
+    }
     closeSheet('tsForm');
     showToast(editId ? 'Week updated' : 'Week saved');
     await loadAll();
@@ -2229,6 +2416,22 @@ function showTsDetail(id) {
   const [ws, we] = workWeekFor(e.date);
   detailContext = { kind: 'ts', id };
   document.getElementById('detailTitle').textContent = dispDate(e.date);
+
+  // Build optional split breakdown rows
+  let splitHtml = '';
+  if (e.split && typeof e.split === 'object') {
+    const mFmt = m => {
+      const [yy, mm] = m.split('-').map(Number);
+      return new Date(yy, mm-1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    };
+    splitHtml = Object.keys(e.split).sort().map(m => `
+      <div class="detail-row">
+        <div class="detail-lbl">${mFmt(m)}</div>
+        <div class="detail-val">${fmt(e.split[m].reg||0)} reg + ${fmt(e.split[m].ot||0)} ot = <strong>${fmt((e.split[m].reg||0)+(e.split[m].ot||0))}</strong></div>
+      </div>
+    `).join('');
+  }
+
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-row"><div class="detail-lbl">Week ending</div><div class="detail-val">${dispDateFull(e.date)}</div></div>
     <div class="detail-row"><div class="detail-lbl">Work week</div><div class="detail-val">${dispDateShort(ws)} – ${dispDateShort(we)}</div></div>
@@ -2236,6 +2439,7 @@ function showTsDetail(id) {
     <div class="detail-row"><div class="detail-lbl">Overtime hrs</div><div class="detail-val">${fmt(e.ot||0)}</div></div>
     <div class="detail-row"><div class="detail-lbl">Total hrs</div><div class="detail-val"><strong>${fmt(tot)}</strong></div></div>
     <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val">${status}</div></div>
+    ${splitHtml}
     ${e.notes ? `<div class="detail-row"><div class="detail-lbl">Notes</div><div class="detail-val">${escHtml(e.notes)}</div></div>` : ''}
   `;
   openSheet('detail');
@@ -2295,12 +2499,23 @@ function renderTimesheet() {
     const lbl = e.auto ? 'Auto' :
                 tot >= 37 && tot <= 45 ? 'Normal' :
                 tot < 37 ? 'Short' : 'Long';
-    const subtitle = (e.notes ? escHtml(e.notes) : '') ||
-                     `Reg ${fmt(e.reg||0)}${(e.ot||0)>0?' • OT '+fmt(e.ot):''}`;
+    let subtitle;
+    if (e.split && typeof e.split === 'object') {
+      const parts = Object.keys(e.split).sort().map(m => {
+        const [yy, mm] = m.split('-').map(Number);
+        const monLbl = new Date(yy, mm-1, 1).toLocaleDateString('en-US', { month: 'short' });
+        const h = (e.split[m].reg||0) + (e.split[m].ot||0);
+        return `${monLbl} ${fmt(h)}h`;
+      });
+      subtitle = parts.join(' · ');
+    } else {
+      subtitle = (e.notes ? escHtml(e.notes) : '') ||
+                 `Reg ${fmt(e.reg||0)}${(e.ot||0)>0?' • OT '+fmt(e.ot):''}`;
+    }
     return `<div class="entry" onclick="showTsDetail('${e.id}')">
       <div class="entry-leading"><span class="status-dot" style="${dot}"></span></div>
       <div class="entry-body">
-        <div class="entry-title">${dispDateShort(e.date)} <span style="color:var(--muted);font-weight:400;font-size:11px;">· ${lbl}</span></div>
+        <div class="entry-title">${dispDateShort(e.date)} <span style="color:var(--muted);font-weight:400;font-size:11px;">· ${lbl}</span>${e.split ? ' <span class="badge badge-blue" style="font-size:9px;padding:1px 5px;">SPLIT</span>' : ''}</div>
         <div class="entry-sub">${subtitle}</div>
       </div>
       <div class="entry-trailing">
@@ -2331,11 +2546,90 @@ function renderPager(elId, current, total, onClick) {
 
 function exportTsCsv() {
   if (!tsEntries.length) { showToast('No data to export'); return; }
-  const rows = [['Week Ending','Regular','Overtime','Total','Notes','Auto']];
+  const rows = [['Week Ending','Regular','Overtime','Total','Notes','Auto','Split JSON']];
   [...tsEntries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-    rows.push([e.date, e.reg||0, e.ot||0, (e.reg||0)+(e.ot||0), e.notes||'', e.auto?'Yes':'No']);
+    rows.push([
+      e.date, e.reg||0, e.ot||0, (e.reg||0)+(e.ot||0),
+      e.notes||'', e.auto?'Yes':'No',
+      e.split ? JSON.stringify(e.split) : ''
+    ]);
   });
   downloadCsv('timesheet.csv', rows);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   AUTO-CLEANUP — review & delete legacy auto:true placeholder entries
+   ════════════════════════════════════════════════════════════════════════ */
+function openAutoCleanup() {
+  closeSheet('menu');
+  renderAutoCleanList();
+  openSheet('autoClean');
+}
+
+function renderAutoCleanList() {
+  const wrap = document.getElementById('autoCleanList');
+  const btn  = document.getElementById('autoDelAllBtn');
+  const auto = tsEntries.filter(e => e.auto === true).sort((a,b) => b.date.localeCompare(a.date));
+  if (!auto.length) {
+    wrap.innerHTML = '<div class="empty-state">No auto-filled entries to clean up. ✓</div>';
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = 'block';
+  btn.textContent = `Delete All ${auto.length} Auto Entr${auto.length===1?'y':'ies'}`;
+  wrap.innerHTML = `
+    <div class="entry-list">
+      ${auto.map(e => `
+        <div class="entry">
+          <div class="entry-leading" style="background:rgba(184,114,46,0.15);color:var(--amber);">⚠</div>
+          <div class="entry-body">
+            <div class="entry-title">${dispDateShort(e.date)} <span class="badge badge-auto" style="font-size:9px;padding:1px 5px;">Auto</span></div>
+            <div class="entry-sub">Reg ${fmt(e.reg||0)} hrs · placeholder from old auto-fill</div>
+          </div>
+          <button class="btn btn-red btn-sm" onclick="deleteOneAutoEntry('${e.id}')">Delete</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function deleteOneAutoEntry(id) {
+  const e = tsEntries.find(x => x.id === id); if (!e) return;
+  if (!confirm('Delete auto-filled entry for ' + dispDate(e.date) + '?')) return;
+  setSyncWait('Deleting…');
+  try {
+    await tsCol().doc(id).delete();
+    tsEntries = tsEntries.filter(x => x.id !== id);
+    showToast('Removed');
+    renderAutoCleanList();
+    renderTimesheet();
+    renderPayslips();   // payslip math depends on tsEntries
+    renderPayGlance();
+    setSyncOk('Synced');
+  } catch(err) { setSyncErr('Delete failed'); console.error(err); }
+}
+
+async function deleteAllAutoEntries() {
+  const auto = tsEntries.filter(e => e.auto === true);
+  if (!auto.length) return;
+  if (!confirm(`Delete all ${auto.length} auto-filled entries? This cannot be undone.`)) return;
+  setSyncWait('Deleting…');
+  try {
+    // Firestore batches max 500 writes; chunk for safety
+    for (let i = 0; i < auto.length; i += 400) {
+      const batch = db.batch();
+      auto.slice(i, i+400).forEach(e => batch.delete(tsCol().doc(e.id)));
+      await batch.commit();
+    }
+    const ids = new Set(auto.map(e => e.id));
+    tsEntries = tsEntries.filter(e => !ids.has(e.id));
+    showToast(`Removed ${auto.length} entries`);
+    renderAutoCleanList();
+    renderTimesheet();
+    renderPayslips();
+    renderPayGlance();
+    setSyncOk('Synced');
+  } catch(err) { setSyncErr('Delete failed'); console.error(err); showToast('Some entries may not have been deleted'); }
 }
 function downloadCsv(filename, rows) {
   const csv = rows.map(r => r.map(v => {
