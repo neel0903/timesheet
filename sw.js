@@ -13,7 +13,7 @@
 //      cache lookup.
 // ════════════════════════════════════════════════════════════════════════
 
-const CACHE_VERSION = 'wt-v1';
+const CACHE_VERSION = 'wt-v2';
 const CORE_ASSETS = [
   './',
   './index.html',

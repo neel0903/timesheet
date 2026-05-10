@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Work Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+<title>Work Tracker</title>
 
-<!-- ── PWA: web app manifest ─────────────────────────────────────────── -->
+<!-- PWA: web app manifest -->
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#4a7c40"/>
 
-<!-- ── PWA: iOS Safari "Add to Home Screen" support ──────────────────── -->
+<!-- iOS Safari "Add to Home Screen" -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Work Tracker"/>
@@ -18,324 +18,387 @@
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png"/>
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png"/>
 
-<!-- Disable iOS Safari auto-format of phone-number-looking strings -->
 <meta name="format-detection" content="telephone=no"/>
-
-<!-- ── Standard favicons ─────────────────────────────────────────────── -->
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
 
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
+
 <style>
-/* ── TOKENS ───────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ──────────────────────────────────────────────────────────────────────
+   Stack:
+   - Mobile-first (320–880px): native-iOS-feel
+   - Desktop (≥880px): wider layout with sidebar-like cards
+   - Body uses iOS system font for native feel; headings use Cormorant
+   ════════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg:       #f4efe6;
-  --bg2:      #ece5d8;
-  --surface:  #faf7f2;
-  --surface2: #f0ead9;
-  --border:   #ddd5c0;
-  --text:     #2a2018;
-  --muted:    #7a6e5e;
-  --green:    #4a7c40;
-  --green2:   #376030;
-  --brown:    #8b4513;
-  --amber:    #b8722e;
-  --red:      #a83232;
-  --blue:     #3b5f8a;
-  --shadow:   rgba(70,50,10,0.10);
-  --tab-h:    52px;
+  --bg:        #f4efe6;
+  --bg2:       #ece5d8;
+  --surface:   #faf7f2;
+  --surface2:  #f0ead9;
+  --border:    #ddd5c0;
+  --border2:   #c8bfa5;
+  --text:      #2a2018;
+  --muted:     #7a6e5e;
+  --green:     #4a7c40;
+  --green2:    #376030;
+  --brown:     #8b4513;
+  --amber:     #b8722e;
+  --red:       #a83232;
+  --blue:      #3b5f8a;
+  --shadow:    rgba(70,50,10,0.10);
+  --shadow-lg: rgba(70,50,10,0.18);
+
+  /* iOS spec geometry */
+  --tabbar-h:  64px;       /* bottom tab bar */
+  --topbar-h:  52px;
+  --row-h:     44px;       /* iOS minimum tap target */
+
+  /* Typography scale (iOS-ish) */
+  --t-large:   34px;
+  --t-title1:  28px;
+  --t-title2:  22px;
+  --t-title3:  18px;
+  --t-headline:17px;
+  --t-body:    15px;
+  --t-callout: 14px;
+  --t-foot:    12px;
+  --t-caption: 11px;
+
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bot:    env(safe-area-inset-bottom, 0px);
 }
 
-/* ── RESET ────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
 body {
-  font-family: 'Jost', sans-serif;
-  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: var(--t-body);
   color: var(--text);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(184,114,46,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(74,124,64,0.06) 0%, transparent 50%);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* ══════════════════════════════════════════════════════════════════════ */
-/*  LOGIN SCREEN                                                          */
-/* ══════════════════════════════════════════════════════════════════════ */
+/* Disable iOS double-tap zoom & long-press menu inside the app */
+button, a, .clickable { touch-action: manipulation; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ════════════════════════════════════════════════════════════════════════ */
 #loginScreen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: var(--bg);
-  background-image:
-    radial-gradient(ellipse at 15% 15%, rgba(184,114,46,0.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 85%, rgba(74,124,64,0.10) 0%, transparent 50%);
+  padding: max(24px, var(--safe-top)) 24px max(24px, var(--safe-bot));
 }
-
 .login-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 48px 40px 40px;
+  border-radius: 18px;
+  padding: 36px 28px 28px;
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   box-shadow: 0 8px 40px var(--shadow);
   text-align: center;
 }
-
 .login-logo {
-  width: 56px; height: 56px;
+  width: 64px; height: 64px;
   background: linear-gradient(135deg, var(--green), var(--amber));
-  border-radius: 16px;
+  border-radius: 18px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   margin: 0 auto 20px;
-  box-shadow: 0 4px 16px rgba(74,124,64,0.25);
+  box-shadow: 0 6px 18px rgba(74,124,64,0.30);
 }
-
 .login-card h1 {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.9rem;
+  font-size: var(--t-title1);
   font-weight: 600;
-  color: var(--text);
   margin-bottom: 6px;
 }
-
-.login-card p {
-  font-size: 0.85rem;
+.login-card .login-sub {
+  font-size: var(--t-callout);
   color: var(--muted);
-  margin-bottom: 32px;
-  font-weight: 300;
+  margin-bottom: 28px;
 }
-
 .login-label {
   display: block;
   text-align: left;
-  font-size: 0.75rem;
+  font-size: var(--t-caption);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.7px;
   color: var(--muted);
-  margin-bottom: 6px;
-  margin-top: 16px;
+  margin: 14px 0 6px;
 }
-
 .login-input {
   width: 100%;
-  background: var(--surface2);
+  background: #fff;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: var(--t-body);
+  font-family: inherit;
   color: var(--text);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
 }
 .login-input:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(74,124,64,0.13);
-  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74,124,64,0.15);
 }
-
 .login-btn {
   width: 100%;
-  margin-top: 24px;
-  padding: 13px;
+  margin-top: 22px;
+  padding: 15px;
   background: var(--green);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: var(--t-headline);
   font-weight: 600;
   cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-appearance: none;
 }
-.login-btn:hover   { background: var(--green2); transform: translateY(-1px); }
-.login-btn:disabled{ opacity: 0.6; cursor: not-allowed; transform: none; }
-
+.login-btn:active { background: var(--green2); transform: scale(0.98); }
+.login-btn:disabled { opacity: 0.6; }
 .login-error {
   margin-top: 14px;
   padding: 10px 14px;
   background: #f8e8e8;
   border: 1px solid #e0b0b0;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  border-radius: 10px;
+  font-size: var(--t-foot);
   color: var(--red);
   display: none;
   text-align: left;
 }
-
 .login-help {
-  margin-top: 20px;
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.6;
+  margin-top: 18px;
+  font-size: 11px;
+  color: #b0a896;
 }
 
-/* ══════════════════════════════════════════════════════════════════════ */
-/*  MAIN APP                                                              */
-/* ══════════════════════════════════════════════════════════════════════ */
-#mainApp { display: none; min-height: 100vh; }
+/* ════════════════════════════════════════════════════════════════════════
+   MAIN APP SHELL
+   ════════════════════════════════════════════════════════════════════════ */
+#mainApp { display: none; }
+#mainApp.visible { display: block; }
 
-/* iOS PWA: respect safe-area insets on devices with notch / home indicator */
-body {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
-/* ── Top bar ── */
+/* Top bar - sticky, shows under iOS status bar */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
   background: var(--surface);
+  background-color: rgba(250, 247, 242, 0.85);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding-top: var(--safe-top);
+}
+.topbar-inner {
+  height: var(--topbar-h);
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 8px var(--shadow);
-}
-
-.topbar-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.topbar-brand .logo-sm {
-  width: 30px; height: 30px;
-  background: linear-gradient(135deg, var(--green), var(--amber));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.9rem;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
-
-.user-pill {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--surface2);
-  padding: 5px 12px 5px 5px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
+.topbar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: var(--t-title3);
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#syncBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 4px 9px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+#syncBadge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+#syncBadge.ok  .dot { background: var(--green); }
+#syncBadge.err .dot { background: var(--red); }
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-appearance: none;
+}
+.icon-btn:active { background: var(--bg2); }
 .avatar {
-  width: 28px; height: 28px;
+  width: 32px; height: 32px;
   background: linear-gradient(135deg, var(--green), var(--amber));
   color: #fff;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-.user-email { font-size: 0.82rem; color: var(--text); font-weight: 500; }
-.signout-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.signout-btn:hover { color: var(--red); border-color: var(--red); }
-
-#syncBadge {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 0.75rem;
-  color: var(--muted);
-  background: var(--surface2);
-  padding: 5px 11px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-}
-#syncBadge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
-#syncBadge.ok .dot  { background: var(--green); }
-#syncBadge.err .dot { background: var(--red); }
-
-/* ── Tabs ── */
-.tab-nav {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
   display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
 }
-.tab-nav::-webkit-scrollbar { display: none; }
-.tab-btn {
+
+/* ════════════════════════════════════════════════════════════════════════
+   MAIN CONTENT AREA
+   ════════════════════════════════════════════════════════════════════════ */
+.main-scroll {
+  padding: 16px 16px calc(var(--tabbar-h) + var(--safe-bot) + 16px);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ════════════════════════════════════════════════════════════════════════
+   BOTTOM TAB BAR (iOS native style)
+   ════════════════════════════════════════════════════════════════════════ */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  z-index: 90;
+  background: rgba(250, 247, 242, 0.92);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bot);
+  display: flex;
+}
+.tabbar-btn {
+  flex: 1;
   background: transparent;
   border: none;
-  padding: 0 18px;
-  height: var(--tab-h);
-  font-family: 'Jost', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--muted);
+  height: var(--tabbar-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-  transition: color 0.2s, border-color 0.2s;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color 0.12s;
+  padding: 6px 2px;
+  -webkit-appearance: none;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active {
-  color: var(--green);
-  border-bottom-color: var(--green);
+.tabbar-btn .ico { font-size: 22px; line-height: 1; }
+.tabbar-btn .lbl { font-size: 10px; letter-spacing: 0.1px; }
+.tabbar-btn.active { color: var(--green); }
+.tabbar-btn:active { transform: scale(0.92); }
+
+/* Desktop: collapse tab bar into top tabs */
+@media (min-width: 880px) {
+  .tabbar {
+    position: sticky;
+    top: calc(var(--safe-top) + var(--topbar-h));
+    bottom: auto;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    justify-content: center;
+  }
+  .tabbar-btn {
+    flex: 0 0 auto;
+    height: 48px;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0 18px;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+  }
+  .tabbar-btn .ico { font-size: 16px; }
+  .tabbar-btn .lbl { font-size: 13px; font-weight: 600; }
+  .tabbar-btn.active { border-bottom-color: var(--green); }
+  .main-scroll {
+    padding: 24px 24px 80px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CARDS & SECTIONS
+   ════════════════════════════════════════════════════════════════════════ */
+.section {
+  margin-bottom: 18px;
+}
+.section-title {
+  font-size: var(--t-foot);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  margin: 4px 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-
-.tab-pane { display: none; padding: 28px 24px 80px; max-width: 1200px; margin: 0 auto; }
-.tab-pane.active { display: block; }
-
-/* ── Two-column responsive grid ── */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-.full-col { grid-column: 1 / -1; }
-@media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
-
-/* ── Cards ── */
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 2px 12px var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 1px 3px var(--shadow);
 }
-.card-title {
+.card-pad { padding: 16px; }
+.card-hd {
+  padding: 14px 16px 0;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.2rem;
+  font-size: var(--t-title3);
   font-weight: 600;
-  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text);
 }
 .cticon {
   width: 28px; height: 28px;
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.92rem;
+  font-size: 14px;
 }
 .ci-green { background: rgba(74,124,64,0.15);  color: var(--green); }
 .ci-amber { background: rgba(184,114,46,0.15); color: var(--amber); }
@@ -343,361 +406,427 @@ body {
 .ci-red   { background: rgba(168,50,50,0.15);  color: var(--red); }
 .ci-blue  { background: rgba(59,95,138,0.15);  color: var(--blue); }
 
-.sub-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 10px;
-  display: flex; align-items: center; gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Two-column desktop layout */
+@media (min-width: 880px) {
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .full-col { grid-column: 1 / -1; }
 }
 
-/* ── Form inputs ── */
-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 5px;
-  margin-top: 12px;
-}
-input[type="text"], input[type="number"], input[type="date"], input[type="month"],
-input[type="email"], input[type="password"], select, textarea {
-  width: 100%;
-  background: var(--surface2);
+/* ════════════════════════════════════════════════════════════════════════
+   FORMS — iOS-style grouped lists
+   ════════════════════════════════════════════════════════════════════════ */
+.form-group {
+  background: var(--surface);
+  border-radius: 12px;
   border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 10px 13px;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.92rem;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: var(--row-h);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.form-row:last-child { border-bottom: none; }
+.form-row label {
+  flex: 0 0 38%;
+  font-size: var(--t-callout);
+  font-weight: 500;
   color: var(--text);
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.form-row .field {
+  flex: 1;
+  min-width: 0;
+}
+.form-row input[type="text"],
+.form-row input[type="number"],
+.form-row input[type="date"],
+.form-row input[type="month"],
+.form-row input[type="email"],
+.form-row input[type="password"],
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--t-body);
+  color: var(--text);
+  text-align: right;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(74,124,64,0.13);
-  background: #fff;
-}
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237a6e5e' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 30px;
   appearance: none;
 }
+.form-row input::placeholder { color: #b0a896; }
 
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.field-row-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-@media (max-width: 540px) {
-  .field-row-3 { grid-template-columns: 1fr; }
+.form-row input[type="date"],
+.form-row input[type="month"] {
+  text-align: right;
+  min-height: 22px;
 }
 
-.currency-wrap {
-  position: relative;
+/* Stand-alone field (not in form-group, no row layout) */
+.std-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: var(--t-body);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
 }
-.currency-wrap .sym {
-  position: absolute;
-  left: 13px;
-  top: 50%;
-  transform: translateY(-50%);
+.std-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(74,124,64,0.13);
+}
+
+.field-help {
+  font-size: var(--t-foot);
   color: var(--muted);
-  font-weight: 500;
-  font-size: 0.92rem;
-  pointer-events: none;
-}
-.currency-wrap input { padding-left: 26px; }
-
-.val-msg {
-  display: none;
-  font-size: 0.78rem;
-  color: var(--red);
-  margin-top: 4px;
-}
-
-.week-hint {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 4px;
+  margin: 4px 14px 8px;
   font-style: italic;
 }
+.field-err {
+  font-size: var(--t-foot);
+  color: var(--red);
+  margin: 4px 14px 8px;
+  display: none;
+}
 
-/* ── Buttons ── */
+/* Currency field with $ prefix */
+.cur-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: flex-end;
+}
+.cur-sym {
+  color: var(--muted);
+  margin-right: 4px;
+  font-size: var(--t-body);
+}
+
+/* Combobox: select w/ "+ Add new..." */
+.combo {
+  position: relative;
+  width: 100%;
+}
+.combo input {
+  width: 100% !important;
+  text-align: right !important;
+  padding-right: 24px !important;
+}
+.combo::after {
+  content: "▾";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+.combo-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow-lg);
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+  -webkit-overflow-scrolling: touch;
+}
+.combo-list.show { display: block; }
+.combo-item {
+  padding: 12px 14px;
+  font-size: var(--t-body);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.combo-item:last-child { border-bottom: none; }
+.combo-item:active { background: var(--bg2); }
+.combo-item.create {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
+  height: 44px;
+  padding: 0 20px;
   border: none;
-  border-radius: 9px;
-  font-family: 'Jost', sans-serif;
-  font-size: 0.85rem;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: var(--t-headline);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
+  transition: opacity 0.1s, transform 0.05s;
+  -webkit-appearance: none;
   white-space: nowrap;
 }
+.btn:active { opacity: 0.8; transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .btn-green { background: var(--green); color: #fff; }
-.btn-green:hover { background: var(--green2); transform: translateY(-1px); }
 .btn-brown { background: var(--brown); color: #fff; }
-.btn-brown:hover { background: #6e360f; transform: translateY(-1px); }
+.btn-blue  { background: var(--blue);  color: #fff; }
 .btn-amber { background: var(--amber); color: #fff; }
-.btn-amber:hover { background: #95591f; transform: translateY(-1px); }
-.btn-red   { background: var(--red); color: #fff; }
-.btn-red:hover { background: #842525; }
-.btn-blue  { background: var(--blue); color: #fff; }
-.btn-blue:hover { background: #2d4970; }
-.btn-ghost {
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { color: var(--text); border-color: var(--muted); background: var(--surface2); }
-.btn-full { width: 100%; margin-top: 16px; padding: 12px; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-red   { background: var(--red);   color: #fff; }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-link  { background: transparent; color: var(--green); height: auto; padding: 4px; font-size: var(--t-callout); }
+.btn-full  { width: 100%; }
+.btn-sm    { height: 32px; padding: 0 12px; font-size: var(--t-callout); border-radius: 9px; }
 
-/* ── Stats grid ── */
+/* Stats grid */
 .stats-grid {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 14px;
+}
+@media (min-width: 540px) {
+  .stats-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 }
 .stat-box {
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 13px;
-  text-align: center;
   border-left: 3px solid var(--green);
+  border-radius: 10px;
+  padding: 12px 14px;
 }
-.stat-box.accent-amber { border-left-color: var(--amber); }
-.stat-box.accent-brown { border-left-color: var(--brown); }
-.stat-box.accent-blue  { border-left-color: var(--blue); }
-.stat-box.accent-red   { border-left-color: var(--red); }
+.stat-box.amber { border-left-color: var(--amber); }
+.stat-box.brown { border-left-color: var(--brown); }
+.stat-box.blue  { border-left-color: var(--blue); }
+.stat-box.red   { border-left-color: var(--red); }
 .sv {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.5rem;
+  font-size: var(--t-title2);
   font-weight: 600;
   color: var(--text);
   line-height: 1.1;
 }
 .sl {
-  font-size: 0.7rem;
+  font-size: var(--t-caption);
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   margin-top: 4px;
 }
 
-hr.div { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-
-.filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
-  gap: 10px;
-  align-items: end;
-  margin-bottom: 14px;
-}
-.filter-row > div { min-width: 0; }
-.filter-row label { margin-top: 0; }
-.filter-row input { margin-bottom: 0; }
-@media (max-width: 540px) {
-  .filter-row { grid-template-columns: 1fr 1fr; }
-  .filter-row .btn { grid-column: span 2; }
-}
-
-/* ── Data Table (NEW) ── */
-.dtable-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* Badges */
+.badge {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 3px;
+  padding: 2px 9px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.dtable-toolbar .search-box {
-  flex: 1;
-  min-width: 180px;
+.badge-green { background: rgba(74,124,64,0.16);  color: var(--green); }
+.badge-amber { background: rgba(184,114,46,0.16); color: var(--amber); }
+.badge-red   { background: rgba(168,50,50,0.16);  color: var(--red); }
+.badge-blue  { background: rgba(59,95,138,0.16);  color: var(--blue); }
+.badge-grey  { background: #e0d8c0; color: #6a5e4a; }
+.badge-auto  { background: rgba(184,114,46,0.10); color: var(--amber); border: 1px dashed var(--amber); }
+.badge-sub   { background: rgba(59,95,138,0.10); color: var(--blue); border: 1px dashed var(--blue); }
+.cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 9px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 600;
 }
-.dtable-toolbar .search-box input {
-  margin-bottom: 0;
-  padding: 8px 12px;
-  font-size: 0.85rem;
+
+/* ════════════════════════════════════════════════════════════════════════
+   ENTRY LIST (mobile cards) / TABLE (desktop)
+   ════════════════════════════════════════════════════════════════════════ */
+.entry-list {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
 }
-.dtable-toolbar .pagesize {
-  font-size: 0.78rem;
-  color: var(--muted);
+.entry {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  gap: 10px;
+  min-height: 64px;
+  background: var(--surface);
+  transition: background 0.1s;
+  position: relative;
+}
+.entry:last-child { border-bottom: none; }
+.entry:active { background: var(--surface2); }
+.entry-leading {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+.entry-body { flex: 1; min-width: 0; }
+.entry-title {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
-.dtable-toolbar .pagesize select {
-  padding: 6px 24px 6px 8px;
-  font-size: 0.78rem;
-  width: auto;
-  min-width: 60px;
-}
-
-.tbl-wrap {
-  position: relative;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+.entry-sub {
+  font-size: var(--t-foot);
+  color: var(--muted);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.tbl-scroll {
-  max-height: 460px;
-  overflow-y: auto;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.entry-trailing {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
-.tbl-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-.tbl-scroll::-webkit-scrollbar-track { background: var(--surface2); }
-.tbl-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.tbl-scroll::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
+.entry-amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: var(--t-title3);
+  font-weight: 700;
+  line-height: 1;
 }
-thead {
-  position: sticky;
-  top: 0;
-  background: var(--surface);
-  z-index: 2;
-  box-shadow: 0 1px 0 var(--border);
-}
-th {
-  padding: 11px 12px;
-  text-align: left;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+.entry-meta {
+  font-size: var(--t-caption);
   color: var(--muted);
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-  user-select: none;
 }
-th.sortable { cursor: pointer; }
-th.sortable:hover { color: var(--text); background: var(--surface2); }
-th.sortable .sort-ind { font-size: 0.65rem; opacity: 0.5; margin-left: 4px; }
-th.sortable.sort-asc .sort-ind,
-th.sortable.sort-desc .sort-ind { opacity: 1; color: var(--green); }
-td {
-  padding: 11px 12px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  vertical-align: middle;
+.entry-chevron {
+  color: var(--muted);
+  font-size: 16px;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
-tbody tr:hover { background: rgba(255,255,255,0.5); }
-tbody tr:last-child td { border-bottom: none; }
-
-.empty {
-  padding: 30px 20px;
+.empty-state {
+  padding: 36px 20px;
   text-align: center;
   color: var(--muted);
+  font-size: var(--t-callout);
   font-style: italic;
-  font-size: 0.88rem;
 }
 
-.dtable-footer {
+/* Search & filter row */
+.list-toolbar {
   display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
   flex-wrap: wrap;
+}
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px 9px 32px;
+  font-family: inherit;
+  font-size: var(--t-callout);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a6e5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+}
+.search-input:focus { border-color: var(--green); }
+.list-toolbar select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 28px 9px 12px;
+  font-family: inherit;
+  font-size: var(--t-callout);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 12 8'%3E%3Cpath fill='%237a6e5e' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.list-footer {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  font-size: 0.78rem;
+  padding: 10px 4px 4px;
+  font-size: var(--t-caption);
   color: var(--muted);
+  flex-wrap: wrap;
   gap: 8px;
 }
 .pager {
   display: flex;
-  align-items: center;
   gap: 4px;
 }
 .pager-btn {
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   color: var(--muted);
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
   cursor: pointer;
-  font-size: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-family: inherit;
+  -webkit-appearance: none;
 }
-.pager-btn:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
-.pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pager-btn:active:not(:disabled) { background: var(--bg2); }
+.pager-btn:disabled { opacity: 0.4; }
 .pager-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
 
-/* ── Badges ── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  border-radius: 12px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.badge-green { background: rgba(74,124,64,0.18);  color: var(--green); }
-.badge-amber { background: rgba(184,114,46,0.18); color: var(--amber); }
-.badge-red   { background: rgba(168,50,50,0.18);  color: var(--red); }
-.badge-blue  { background: rgba(59,95,138,0.18);  color: var(--blue); }
-.badge-grey  { background: #e0d8c0; color: #6a5e4a; }
-.badge-auto  { background: rgba(184,114,46,0.12); color: var(--amber); border: 1px dashed var(--amber); }
-.badge-sub   { background: rgba(59,95,138,0.12); color: var(--blue); border: 1px dashed var(--blue); }
-
-/* User-defined category badge (color picked dynamically) */
-.cat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  border-radius: 12px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* ── Row action buttons ── */
-.row-actions {
-  display: inline-flex;
-  gap: 4px;
-}
-.row-actions .btn {
-  padding: 4px 10px;
-  font-size: 0.72rem;
-}
-
-/* ── Category progress bars (expense summary) ── */
-.cat-bar-wrap { margin-bottom: 8px; }
-.cat-bar-label {
+/* Category bars (expense summary) */
+.cat-bar { margin-bottom: 10px; }
+.cat-bar-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
-  margin-bottom: 3px;
-  color: var(--text);
+  font-size: var(--t-foot);
+  margin-bottom: 4px;
 }
 .cat-bar-track {
   background: var(--surface2);
@@ -711,113 +840,202 @@ tbody tr:last-child td { border-bottom: none; }
   transition: width 0.3s;
 }
 
-/* ── Pay calc results ── */
-.pay-result {
-  margin-top: 18px;
-  padding: 18px;
+/* Pay-result panels */
+.result {
+  margin-top: 14px;
+  padding: 16px;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: 12px;
   display: none;
 }
-.pay-result.visible { display: block; }
-.pay-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.92rem; }
-.pay-lbl { color: var(--muted); }
-.pay-val { font-weight: 600; color: var(--text); }
-.pay-total-row {
+.result.visible { display: block; }
+.result-row {
   display: flex;
   justify-content: space-between;
+  padding: 5px 0;
+  font-size: var(--t-callout);
+}
+.result-lbl { color: var(--muted); }
+.result-val { font-weight: 600; }
+.result-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 10px;
   padding-top: 12px;
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
 }
-.pay-total-lbl {
+.result-total-lbl {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.05rem;
+  font-size: var(--t-title3);
   font-weight: 600;
-  color: var(--text);
 }
-.pay-total-val {
+.result-total-val {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.45rem;
+  font-size: var(--t-title2);
   font-weight: 700;
   color: var(--green);
 }
-.compare-badge {
+.compare-pill {
   display: inline-block;
   margin-top: 8px;
-  padding: 5px 11px;
-  border-radius: 14px;
-  font-size: 0.78rem;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: var(--t-foot);
   font-weight: 600;
 }
 .cm-match { background: rgba(74,124,64,0.18);  color: var(--green); }
 .cm-over  { background: rgba(184,114,46,0.18); color: var(--amber); }
 .cm-under { background: rgba(168,50,50,0.18);  color: var(--red); }
 
-/* ── Modal ── */
-.modal-bg {
+/* ════════════════════════════════════════════════════════════════════════
+   FULL-SCREEN MODAL (for entry detail / forms)
+   On mobile slides up from bottom, on desktop centered.
+   ════════════════════════════════════════════════════════════════════════ */
+.sheet-bg {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(42,32,24,0.45);
+  background: rgba(0,0,0,0.32);
   z-index: 200;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
+  animation: fadeBg 0.2s;
 }
-.modal-bg.show { display: flex; }
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 12px 50px rgba(0,0,0,0.25);
+.sheet-bg.show { display: block; }
+@keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+
+.sheet {
+  position: fixed;
+  z-index: 201;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  /* Mobile: bottom sheet */
+  left: 0; right: 0; bottom: 0;
+  max-height: 92vh;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -10px 36px rgba(0,0,0,0.18);
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: var(--safe-bot);
 }
-.modal-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 16px;
+.sheet.show { transform: translateY(0); }
+.sheet-bg.show + .sheet,
+.sheet.show { transform: translateY(0); }
+.sheet-handle {
+  width: 36px;
+  height: 5px;
+  background: var(--border2);
+  border-radius: 3px;
+  margin: 8px auto 4px;
+  flex-shrink: 0;
+}
+.sheet-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
   gap: 10px;
 }
-.modal-actions {
+.sheet-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: var(--t-title3);
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+.sheet-close, .sheet-action {
+  background: transparent;
+  border: none;
+  color: var(--green);
+  font-family: inherit;
+  font-size: var(--t-headline);
+  cursor: pointer;
+  padding: 4px 6px;
+  -webkit-appearance: none;
+}
+.sheet-action { font-weight: 600; }
+.sheet-action.danger { color: var(--red); }
+.sheet-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
-  margin-top: 20px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-/* ── Category manager chips ── */
+@media (min-width: 720px) {
+  .sheet {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    width: min(92vw, 480px);
+    border-radius: 18px;
+    transform: translate(-50%, -45%);
+    max-height: 85vh;
+    opacity: 0;
+  }
+  .sheet.show {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  .sheet-handle { display: none; }
+}
+
+/* Detail rows (read-only) */
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-lbl {
+  flex: 0 0 35%;
+  color: var(--muted);
+  font-size: var(--t-callout);
+}
+.detail-val {
+  flex: 1;
+  text-align: right;
+  font-size: var(--t-body);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Cat manager chips */
 .cat-chip-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 10px;
 }
 .cat-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 5px 5px 10px;
+  padding: 5px 4px 5px 10px;
   border-radius: 14px;
-  font-size: 0.78rem;
+  font-size: var(--t-foot);
   font-weight: 500;
-  background: var(--surface2);
+  background: var(--surface);
   border: 1px solid var(--border);
 }
 .cat-chip-color {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -827,30 +1045,29 @@ tbody tr:last-child td { border-bottom: none; }
   color: var(--muted);
   cursor: pointer;
   font-size: 1rem;
-  padding: 0 4px;
+  padding: 0 5px;
   line-height: 1;
-  border-radius: 50%;
 }
-.cat-chip-x:hover { color: var(--red); }
+.cat-chip-x:active { color: var(--red); }
 
-/* ── Toast ── */
+/* Toast */
 .toast {
   position: fixed;
-  bottom: 22px;
+  bottom: calc(var(--tabbar-h) + var(--safe-bot) + 16px);
   left: 50%;
   transform: translateX(-50%) translateY(60px);
   background: var(--text);
   color: var(--surface);
-  padding: 10px 22px;
+  padding: 10px 18px;
   border-radius: 22px;
-  font-size: 0.85rem;
+  font-size: var(--t-callout);
   font-weight: 500;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.20);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s, transform 0.25s;
+  transition: opacity 0.2s, transform 0.2s;
   z-index: 300;
-  max-width: 90vw;
+  max-width: 92vw;
   text-align: center;
 }
 .toast.show {
@@ -858,612 +1075,562 @@ tbody tr:last-child td { border-bottom: none; }
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Responsive tweaks ── */
-@media (max-width: 600px) {
-  .topbar { padding: 0 14px; }
-  .user-email { display: none; }
-  .tab-nav { padding: 0 14px; }
-  .tab-btn { padding: 0 12px; font-size: 0.8rem; }
-  .tab-pane { padding: 20px 14px 80px; }
-  .topbar-brand { font-size: 1.05rem; }
-  .filter-row { grid-template-columns: 1fr 1fr; }
-  th, td { padding: 9px 8px; font-size: 0.78rem; }
+/* ════════════════════════════════════════════════════════════════════════
+   FAB (floating action button) — mobile only, for "add" on list screens
+   ════════════════════════════════════════════════════════════════════════ */
+.fab {
+  position: fixed;
+  bottom: calc(var(--tabbar-h) + var(--safe-bot) + 16px);
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(74,124,64,0.45);
+  z-index: 70;
+  -webkit-appearance: none;
+  transition: transform 0.1s;
 }
+.fab:active { transform: scale(0.92); }
+@media (min-width: 880px) {
+  .fab { display: none; }
+}
+
+/* Status indicator dot for week (Normal/Short/Long/Auto) */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+/* Hide on desktop or mobile */
+.mobile-only { display: block; }
+.desktop-only { display: none; }
+@media (min-width: 880px) {
+  .mobile-only { display: none; }
+  .desktop-only { display: block; }
+}
+
+/* Color picker reset */
+input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  padding: 4px;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+
+hr.div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!--  LOGIN SCREEN                                                          -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+     ════════════════════════════════════════════════════════════════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">📋</div>
     <h1>Work Tracker</h1>
-    <p>Sign in to access your timesheet &amp; expenses</p>
+    <div class="login-sub">Sign in to access your data</div>
 
-    <label class="login-label" for="loginEmail">Email address</label>
-    <input class="login-input" type="email" id="loginEmail" placeholder="you@email.com" autocomplete="username"/>
+    <label class="login-label" for="loginEmail">Email</label>
+    <input class="login-input" type="email" id="loginEmail" inputmode="email" autocomplete="username" placeholder="you@email.com"/>
 
     <label class="login-label" for="loginPass">Password</label>
-    <input class="login-input" type="password" id="loginPass" placeholder="Your password" autocomplete="current-password"/>
+    <input class="login-input" type="password" id="loginPass" autocomplete="current-password" placeholder="Your password"/>
 
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
-
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
     <div class="login-error" id="loginError"></div>
-
-    <p class="login-help">
-      <span style="font-size:0.73rem;color:#aaa;margin-top:4px;display:block;">Private access only — your data is encrypted and isolated to your account.</span>
-    </p>
+    <div class="login-help">Private access only. Your data stays in your account.</div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!--  MAIN APP                                                              -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════
+     MAIN APP
+     ════════════════════════════════════════════════════════════════════ -->
 <div id="mainApp">
 
   <!-- Top bar -->
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="logo-sm">📋</div>
-      Work Tracker
-    </div>
-    <div class="topbar-right">
-      <div id="syncBadge"><div class="dot"></div><span id="syncMsg">Syncing…</span></div>
-      <div class="user-pill">
-        <div class="avatar" id="userAvatar">?</div>
-        <span class="user-email" id="userEmail"></span>
+    <div class="topbar-inner">
+      <div class="topbar-title" id="screenTitle">Timesheet</div>
+      <div class="topbar-actions">
+        <div id="syncBadge"><div class="dot"></div><span id="syncMsg">Syncing…</span></div>
+        <button class="icon-btn" onclick="openMenu()" aria-label="Menu">⋯</button>
       </div>
-      <button class="signout-btn" onclick="doSignOut()">Sign out</button>
     </div>
   </div>
 
-  <!-- Tab navigation -->
-  <div class="tab-nav">
-    <button class="tab-btn active" data-tab="timesheet" onclick="switchTab('timesheet',this)">⏱ Timesheet</button>
-    <button class="tab-btn" data-tab="expenses" onclick="switchTab('expenses',this)">💳 Expenses</button>
-    <button class="tab-btn" data-tab="subscriptions" onclick="switchTab('subscriptions',this)">🔁 Subscriptions</button>
-    <button class="tab-btn" data-tab="payslips" onclick="switchTab('payslips',this)">💵 Payslips</button>
-    <button class="tab-btn" data-tab="pay" onclick="switchTab('pay',this)">🧮 Pay Calculator</button>
-  </div>
+  <!-- Scrollable content -->
+  <div class="main-scroll">
 
-  <!-- ── TAB 1: TIMESHEET ────────────────────────────────────────────── -->
-  <div class="tab-pane active" id="tab-timesheet">
-    <div class="two-col">
+    <!-- ── TIMESHEET TAB ─────────────────────────────────────────────── -->
+    <div class="tab-pane active" id="tab-timesheet">
+      <div class="two-col">
 
-      <!-- Log form -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-green">✏️</span> Log Weekly Hours</div>
-
-        <label>Week Ending Date (Sunday)</label>
-        <input type="date" id="weekDate"/>
-        <div class="week-hint" id="weekInfo"></div>
-        <div class="val-msg" id="dateErr">⚠ Please select a Sunday date</div>
-
-        <div class="field-row">
-          <div><label>Regular Hours</label><input type="number" id="regHours" min="0" max="168" step="0.5" placeholder="e.g. 37.5"/></div>
-          <div><label>Overtime Hours</label><input type="number" id="otHours" min="0" max="60" step="0.5" placeholder="e.g. 0"/></div>
-        </div>
-        <div class="val-msg" id="hoursErr">⚠ Regular hours must be between 0–168</div>
-
-        <label>Notes (optional)</label>
-        <input type="text" id="tsNotes" placeholder="e.g. Holiday, WFH week…"/>
-
-        <input type="hidden" id="tsEditId"/>
-        <button class="btn btn-green btn-full" id="saveBtn" onclick="saveTimesheet()">Save Week →</button>
-        <button class="btn btn-ghost btn-full" id="cancelEditBtn" style="display:none;margin-top:8px;" onclick="cancelTsEdit()">Cancel Edit</button>
-      </div>
-
-      <!-- Summary -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-amber">📊</span> All-Time Summary</div>
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
-          <div class="stat-box"><div class="sv" id="tsTotal">—</div><div class="sl">Total Hours</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="tsWeeks">—</div><div class="sl">Weeks Logged</div></div>
-          <div class="stat-box accent-brown"><div class="sv" id="tsAvg">—</div><div class="sl">Avg / Week</div></div>
-          <div class="stat-box accent-blue"><div class="sv" id="tsOT">—</div><div class="sl">Overtime Hrs</div></div>
-        </div>
-
-        <hr class="div"/>
-        <div class="sub-title"><span class="cticon ci-amber" style="width:22px;height:22px;font-size:0.75rem;">📅</span> Filter by Date Range</div>
-        <div class="filter-row">
-          <div><label>From</label><input type="date" id="tsFrom"/></div>
-          <div><label>To</label><input type="date" id="tsTo"/></div>
-          <button class="btn btn-amber" onclick="applyTsFilter()">Apply</button>
-        </div>
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
-          <div class="stat-box"><div class="sv" id="tsFilteredHrs">—</div><div class="sl">Hours in Range</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="tsFilteredWks">—</div><div class="sl">Weeks in Range</div></div>
-        </div>
-      </div>
-
-      <!-- History table (data-table) -->
-      <div class="card full-col">
-        <div class="card-title"><span class="cticon ci-green">📋</span> Weekly History</div>
-        <div class="dtable-toolbar">
-          <div class="search-box"><input type="text" id="tsSearch" placeholder="🔍 Search notes or date…" oninput="renderTimesheet()"/></div>
-          <div class="pagesize">Rows:
-            <select id="tsPageSize" onchange="renderTimesheet()">
-              <option>10</option><option selected>25</option><option>50</option><option>100</option>
-            </select>
-          </div>
-          <button class="btn btn-ghost" onclick="exportTsCsv()">⬇ CSV</button>
-        </div>
-        <div class="tbl-wrap">
-          <div class="tbl-scroll">
-            <table>
-              <thead><tr>
-                <th class="sortable" data-sort="date" onclick="sortTs('date')">Week Ending<span class="sort-ind">▼</span></th>
-                <th class="sortable" data-sort="reg"  onclick="sortTs('reg')">Regular<span class="sort-ind"></span></th>
-                <th class="sortable" data-sort="ot"   onclick="sortTs('ot')">Overtime<span class="sort-ind"></span></th>
-                <th class="sortable" data-sort="tot"  onclick="sortTs('tot')">Total<span class="sort-ind"></span></th>
-                <th>Notes</th>
-                <th>Status</th>
-                <th></th>
-              </tr></thead>
-              <tbody id="tsBody"></tbody>
-            </table>
-            <div class="empty" id="tsEmpty">No entries yet — log your first week above ↑</div>
-          </div>
-          <div class="dtable-footer">
-            <div id="tsPageInfo">—</div>
-            <div class="pager" id="tsPager"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ── TAB 2: EXPENSES ─────────────────────────────────────────────── -->
-  <div class="tab-pane" id="tab-expenses">
-    <div class="two-col">
-
-      <!-- Add expense form -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-red">➕</span> Add Expense</div>
-
-        <label>Date</label>
-        <input type="date" id="expDate"/>
-
-        <div class="field-row">
-          <div>
-            <label>Category</label>
-            <select id="expCat"></select>
-          </div>
-          <div>
-            <label>Amount ($)</label>
-            <div class="currency-wrap">
-              <span class="sym">$</span>
-              <input type="number" id="expAmt" min="0" step="0.01" placeholder="0.00"/>
-            </div>
-          </div>
-        </div>
-        <div class="val-msg" id="expAmtErr">⚠ Please enter a valid amount</div>
-
-        <label>Description</label>
-        <input type="text" id="expDesc" placeholder="e.g. Lunch with client, Train to NYC…"/>
-
-        <label>Receipt / Reference (optional)</label>
-        <input type="text" id="expRef" placeholder="e.g. INV-0042, Uber receipt"/>
-
-        <input type="hidden" id="expEditId"/>
-        <button class="btn btn-brown btn-full" id="expSaveBtn" onclick="saveExpense()">Add Expense →</button>
-        <button class="btn btn-ghost btn-full" id="expCancelEditBtn" style="display:none;margin-top:8px;" onclick="cancelExpEdit()">Cancel Edit</button>
-
-        <hr class="div"/>
-        <button class="btn btn-ghost btn-full" onclick="openCatManager()">⚙ Manage Categories</button>
-      </div>
-
-      <!-- Expense summary -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-amber">📊</span> Expense Summary</div>
-
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
-          <div class="stat-box accent-brown"><div class="sv" id="expTotalAll">$0</div><div class="sl">All-Time Total</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="expTotalMonth">$0</div><div class="sl">This Month</div></div>
-          <div class="stat-box accent-blue"><div class="sv" id="expCount">0</div><div class="sl">Total Entries</div></div>
-          <div class="stat-box"><div class="sv" id="expTopCat">—</div><div class="sl">Top Category</div></div>
-        </div>
-
-        <hr class="div"/>
-        <div class="sub-title"><span class="cticon ci-amber" style="width:22px;height:22px;font-size:0.75rem;">📅</span> Filter by Month</div>
-        <div class="filter-row">
-          <div><label>Month</label><input type="month" id="expMonth" style="margin-bottom:0;"/></div>
-          <button class="btn btn-amber" onclick="applyExpFilter()">Apply</button>
-          <button class="btn btn-ghost" onclick="clearExpFilter()">Clear</button>
-        </div>
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
-          <div class="stat-box accent-brown"><div class="sv" id="expFilterTotal">—</div><div class="sl">In Range</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="expFilterCount">—</div><div class="sl">Entries</div></div>
-        </div>
-
-        <hr class="div"/>
-        <div class="sub-title">By Category</div>
-        <div id="catBars"><div class="empty" style="padding:12px 0;">No data yet</div></div>
-      </div>
-
-      <!-- Expense history -->
-      <div class="card full-col">
-        <div class="card-title"><span class="cticon ci-brown">💳</span> Expense History</div>
-        <div class="dtable-toolbar">
-          <div class="search-box"><input type="text" id="expSearch" placeholder="🔍 Search description, category, reference…" oninput="renderExpenses()"/></div>
-          <select id="expCatFilter" onchange="renderExpenses()" style="width:auto;min-width:160px;padding:8px 28px 8px 12px;font-size:0.85rem;"><option value="">All categories</option></select>
-          <div class="pagesize">Rows:
-            <select id="expPageSize" onchange="renderExpenses()">
-              <option>10</option><option selected>25</option><option>50</option><option>100</option>
-            </select>
-          </div>
-          <button class="btn btn-ghost" onclick="exportExpCsv()">⬇ CSV</button>
-        </div>
-        <div class="tbl-wrap">
-          <div class="tbl-scroll">
-            <table>
-              <thead><tr>
-                <th class="sortable" data-sort="date" onclick="sortExp('date')">Date<span class="sort-ind">▼</span></th>
-                <th class="sortable" data-sort="cat"  onclick="sortExp('cat')">Category<span class="sort-ind"></span></th>
-                <th>Description</th>
-                <th>Reference</th>
-                <th class="sortable" data-sort="amt"  onclick="sortExp('amt')">Amount<span class="sort-ind"></span></th>
-                <th>Source</th>
-                <th></th>
-              </tr></thead>
-              <tbody id="expBody"></tbody>
-            </table>
-            <div class="empty" id="expEmpty">No expenses yet — add your first one above ↑</div>
-          </div>
-          <div class="dtable-footer">
-            <div id="expPageInfo">—</div>
-            <div class="pager" id="expPager"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ── TAB 3: SUBSCRIPTIONS ───────────────────────────────────────── -->
-  <div class="tab-pane" id="tab-subscriptions">
-    <div class="two-col">
-
-      <!-- Add subscription form -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-blue">🔁</span> Add Recurring Subscription</div>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">
-          Set it once. The app auto-creates an expense entry every month on the day you choose, starting from the start date.
-        </p>
-
-        <label>Name</label>
-        <input type="text" id="subName" placeholder="e.g. Netflix, Spotify, Gym Membership"/>
-
-        <div class="field-row">
-          <div>
-            <label>Category</label>
-            <select id="subCat"></select>
-          </div>
-          <div>
-            <label>Amount ($)</label>
-            <div class="currency-wrap">
-              <span class="sym">$</span>
-              <input type="number" id="subAmt" min="0" step="0.01" placeholder="0.00"/>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Summary</div>
+            <div class="stats-grid cols-4">
+              <div class="stat-box"><div class="sv" id="tsTotal">—</div><div class="sl">Total Hrs</div></div>
+              <div class="stat-box amber"><div class="sv" id="tsWeeks">—</div><div class="sl">Weeks</div></div>
+              <div class="stat-box brown"><div class="sv" id="tsAvg">—</div><div class="sl">Avg/Wk</div></div>
+              <div class="stat-box blue"><div class="sv" id="tsOT">—</div><div class="sl">OT Hrs</div></div>
             </div>
           </div>
         </div>
 
-        <div class="field-row">
-          <div>
-            <label>Day of Month</label>
-            <input type="number" id="subDay" min="1" max="31" placeholder="1–31"/>
-          </div>
-          <div>
-            <label>Start Date</label>
-            <input type="date" id="subStart"/>
-          </div>
-        </div>
-
-        <label>End Date (optional)</label>
-        <input type="date" id="subEnd"/>
-
-        <label>Notes (optional)</label>
-        <input type="text" id="subNotes" placeholder="e.g. Premium plan"/>
-
-        <div class="val-msg" id="subErr">⚠ Please fill all required fields</div>
-
-        <input type="hidden" id="subEditId"/>
-        <button class="btn btn-blue btn-full" id="subSaveBtn" onclick="saveSubscription()">Save Subscription →</button>
-        <button class="btn btn-ghost btn-full" id="subCancelEditBtn" style="display:none;margin-top:8px;" onclick="cancelSubEdit()">Cancel Edit</button>
-      </div>
-
-      <!-- Subscription summary -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-amber">📊</span> Subscription Summary</div>
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
-          <div class="stat-box accent-blue"><div class="sv" id="subActiveCount">—</div><div class="sl">Active</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="subMonthlyTotal">$0</div><div class="sl">Monthly Total</div></div>
-          <div class="stat-box accent-brown"><div class="sv" id="subYearlyTotal">$0</div><div class="sl">Yearly Equiv.</div></div>
-          <div class="stat-box"><div class="sv" id="subInactiveCount">—</div><div class="sl">Ended</div></div>
-        </div>
-        <hr class="div"/>
-        <p style="font-size:0.78rem;color:var(--muted);line-height:1.5;">
-          🔁 Auto-generated entries appear in your <strong>Expenses</strong> tab marked with a <span class="badge badge-sub" style="font-size:0.65rem;padding:1px 6px;">SUB</span> badge. Delete or edit any single occurrence there. Stop a subscription here to halt future entries.
-        </p>
-      </div>
-
-      <!-- Subscriptions list -->
-      <div class="card full-col">
-        <div class="card-title"><span class="cticon ci-blue">📋</span> Your Subscriptions</div>
-        <div class="tbl-wrap">
-          <div class="tbl-scroll">
-            <table>
-              <thead><tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Day</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
-                <th></th>
-              </tr></thead>
-              <tbody id="subBody"></tbody>
-            </table>
-            <div class="empty" id="subEmpty">No subscriptions yet — add your first above ↑</div>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">
+              <span>History</span>
+              <button class="btn-link" onclick="exportTsCsv()">⬇ CSV</button>
+            </div>
+            <div class="list-toolbar">
+              <input class="search-input" type="text" id="tsSearch" placeholder="Search notes or date" oninput="renderTimesheet()"/>
+              <select id="tsPageSize" onchange="renderTimesheet()">
+                <option>10</option><option selected>25</option><option>50</option><option>100</option>
+              </select>
+            </div>
+            <div class="entry-list" id="tsBody"></div>
+            <div class="empty-state" id="tsEmpty" style="display:none">No entries yet — tap + to log a week</div>
+            <div class="list-footer">
+              <span id="tsPageInfo">—</span>
+              <div class="pager" id="tsPager"></div>
+            </div>
           </div>
         </div>
-      </div>
 
+      </div>
+      <button class="fab" onclick="openTsForm()" aria-label="Add">+</button>
     </div>
-  </div>
 
-  <!-- ── TAB 4: PAYSLIPS ────────────────────────────────────────────── -->
-  <div class="tab-pane" id="tab-payslips">
-    <div class="two-col">
+    <!-- ── EXPENSES TAB ──────────────────────────────────────────────── -->
+    <div class="tab-pane" id="tab-expenses">
+      <div class="two-col">
 
-      <!-- Add payslip form -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-green">➕</span> Add Payslip</div>
-
-        <div class="field-row">
-          <div>
-            <label>Pay Period From</label>
-            <input type="date" id="psFrom"/>
-          </div>
-          <div>
-            <label>Pay Period To</label>
-            <input type="date" id="psTo"/>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Summary</div>
+            <div class="stats-grid">
+              <div class="stat-box brown"><div class="sv" id="expTotalAll">$0</div><div class="sl">All-Time</div></div>
+              <div class="stat-box amber"><div class="sv" id="expTotalMonth">$0</div><div class="sl">This Month</div></div>
+              <div class="stat-box blue"><div class="sv" id="expCount">0</div><div class="sl">Entries</div></div>
+              <div class="stat-box"><div class="sv" id="expTopCat">—</div><div class="sl">Top Cat.</div></div>
+            </div>
           </div>
         </div>
 
-        <div class="field-row-3">
-          <div>
-            <label>Hours</label>
-            <input type="number" id="psHours" min="0" step="0.5" placeholder="e.g. 75.0"/>
-          </div>
-          <div>
-            <label>Rate ($/hr)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="psRate" min="0" step="0.01" placeholder="13.50"/></div>
-          </div>
-          <div>
-            <label>Amount Paid ($)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="psAmt" min="0" step="0.01" placeholder="Total"/></div>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">
+              <span>By Category</span>
+              <button class="btn-link" onclick="openCatManager()">⚙ Manage</button>
+            </div>
+            <div class="card card-pad" id="catBars"><div class="empty-state" style="padding:8px 0;">No data yet</div></div>
           </div>
         </div>
 
-        <label>Reference (optional)</label>
-        <input type="text" id="psRef" placeholder="e.g. Payslip #2026-04, batch ID"/>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">
+              <span>History</span>
+              <button class="btn-link" onclick="exportExpCsv()">⬇ CSV</button>
+            </div>
+            <div class="list-toolbar">
+              <input class="search-input" type="text" id="expSearch" placeholder="Search description, category" oninput="renderExpenses()"/>
+              <select id="expCatFilter" onchange="renderExpenses()"><option value="">All cat.</option></select>
+              <select id="expPageSize" onchange="renderExpenses()">
+                <option>10</option><option selected>25</option><option>50</option><option>100</option>
+              </select>
+            </div>
+            <div class="entry-list" id="expBody"></div>
+            <div class="empty-state" id="expEmpty" style="display:none">No expenses yet — tap + to add</div>
+            <div class="list-footer">
+              <span id="expPageInfo">—</span>
+              <div class="pager" id="expPager"></div>
+            </div>
+          </div>
+        </div>
 
-        <label>Notes (optional)</label>
-        <input type="text" id="psNotes" placeholder="e.g. Includes bonus, holiday pay…"/>
-
-        <div class="val-msg" id="psErr">⚠ Please fill From, To, Hours, Rate, and Amount</div>
-
-        <input type="hidden" id="psEditId"/>
-        <button class="btn btn-green btn-full" id="psSaveBtn" onclick="savePayslip()">Save Payslip →</button>
-        <button class="btn btn-ghost btn-full" id="psCancelEditBtn" style="display:none;margin-top:8px;" onclick="cancelPsEdit()">Cancel Edit</button>
       </div>
-
-      <!-- Custom date range comparison -->
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-blue">🔍</span> Custom Range Compare</div>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5;">
-          Pick any date range to compare what the timesheet says you worked vs. what payslips paid you in that period.
-        </p>
-
-        <div class="field-row">
-          <div><label>From</label><input type="date" id="cmpFrom"/></div>
-          <div><label>To</label><input type="date" id="cmpTo"/></div>
-        </div>
-
-        <div class="field-row">
-          <div>
-            <label>Regular Rate ($/hr)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="cmpRate" min="0" step="0.01" placeholder="13.50"/></div>
-          </div>
-          <div>
-            <label>OT Rate ($/hr)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="cmpOtRate" min="0" step="0.01" placeholder="20.25"/></div>
-          </div>
-        </div>
-
-        <button class="btn btn-blue btn-full" onclick="runCmp()">Compare →</button>
-
-        <div class="pay-result" id="cmpResult">
-          <div class="pay-row"><span class="pay-lbl">Hours worked (timesheet)</span><span class="pay-val" id="cmpHrs">—</span></div>
-          <div class="pay-row"><span class="pay-lbl">Expected pay</span><span class="pay-val" id="cmpExp">—</span></div>
-          <div class="pay-row"><span class="pay-lbl">Paid (payslips)</span><span class="pay-val" id="cmpPaid">—</span></div>
-          <div class="pay-total-row"><span class="pay-total-lbl">Difference</span><span class="pay-total-val" id="cmpDiff">$0.00</span></div>
-          <span class="compare-badge" id="cmpBadge"></span>
-        </div>
-      </div>
-
-      <!-- Payslip table with diff per row -->
-      <div class="card full-col">
-        <div class="card-title"><span class="cticon ci-amber">💵</span> Payslip History &amp; Difference</div>
-        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">
-          <strong>Difference</strong> = Amount Paid − (Timesheet hours in same range × rate). Positive = you got more than expected; negative = company may owe you.
-        </p>
-        <div class="dtable-toolbar">
-          <div class="search-box"><input type="text" id="psSearch" placeholder="🔍 Search reference or notes…" oninput="renderPayslips()"/></div>
-          <div class="pagesize">Rows:
-            <select id="psPageSize" onchange="renderPayslips()">
-              <option>10</option><option selected>25</option><option>50</option><option>100</option>
-            </select>
-          </div>
-          <button class="btn btn-ghost" onclick="exportPsCsv()">⬇ CSV</button>
-        </div>
-        <div class="tbl-wrap">
-          <div class="tbl-scroll">
-            <table>
-              <thead><tr>
-                <th class="sortable" data-sort="from" onclick="sortPs('from')">From<span class="sort-ind">▼</span></th>
-                <th>To</th>
-                <th class="sortable" data-sort="hours" onclick="sortPs('hours')">Hours<span class="sort-ind"></span></th>
-                <th>Rate</th>
-                <th class="sortable" data-sort="amt" onclick="sortPs('amt')">Paid<span class="sort-ind"></span></th>
-                <th>Expected</th>
-                <th>Diff</th>
-                <th>Reference</th>
-                <th></th>
-              </tr></thead>
-              <tbody id="psBody"></tbody>
-            </table>
-            <div class="empty" id="psEmpty">No payslips yet — add your first above ↑</div>
-          </div>
-          <div class="dtable-footer">
-            <div id="psPageInfo">—</div>
-            <div class="pager" id="psPager"></div>
-          </div>
-        </div>
-
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:14px;margin-bottom:0;">
-          <div class="stat-box"><div class="sv" id="psCount">—</div><div class="sl">Payslips</div></div>
-          <div class="stat-box accent-blue"><div class="sv" id="psPaidTotal">$0</div><div class="sl">Total Paid</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="psExpTotal">$0</div><div class="sl">Total Expected</div></div>
-          <div class="stat-box accent-brown"><div class="sv" id="psDiffTotal">$0</div><div class="sl">Net Diff</div></div>
-        </div>
-      </div>
-
+      <button class="fab" onclick="openExpForm()" aria-label="Add">+</button>
     </div>
-  </div>
 
-  <!-- ── TAB 5: PAY CALCULATOR ──────────────────────────────────────── -->
-  <div class="tab-pane" id="tab-pay">
-    <div class="two-col">
-
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-brown">🧮</span> Pay Calculator</div>
-
-        <label>Calculate Hours From</label>
-        <select id="paySource" onchange="onPaySourceChange()">
-          <option value="alltime">All-Time Timesheet Hours</option>
-          <option value="filtered">Filtered Date Range (set in Timesheet tab)</option>
-          <option value="manual">Enter Hours Manually</option>
-        </select>
-
-        <div id="manualWrap" style="display:none">
-          <label>Hours (manual entry)</label>
-          <input type="number" id="manualHrs" min="0" step="0.5" placeholder="Total hours…"/>
-        </div>
-
-        <div class="field-row">
-          <div>
-            <label>Regular Pay Rate ($/hr)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="payRate" min="0" step="0.01" placeholder="e.g. 13.50"/></div>
-          </div>
-          <div>
-            <label>Overtime Rate ($/hr, optional)</label>
-            <div class="currency-wrap"><span class="sym">$</span><input type="number" id="otRate" min="0" step="0.01" placeholder="e.g. 20.25"/></div>
+    <!-- ── SUBSCRIPTIONS TAB ─────────────────────────────────────────── -->
+    <div class="tab-pane" id="tab-subscriptions">
+      <div class="two-col">
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Summary</div>
+            <div class="stats-grid">
+              <div class="stat-box blue"><div class="sv" id="subActiveCount">—</div><div class="sl">Active</div></div>
+              <div class="stat-box amber"><div class="sv" id="subMonthlyTotal">$0</div><div class="sl">Monthly</div></div>
+              <div class="stat-box brown"><div class="sv" id="subYearlyTotal">$0</div><div class="sl">Yearly</div></div>
+              <div class="stat-box"><div class="sv" id="subInactiveCount">—</div><div class="sl">Stopped</div></div>
+            </div>
           </div>
         </div>
 
-        <label>Your Actual Payslip Amount ($, optional)</label>
-        <div class="currency-wrap"><span class="sym">$</span><input type="number" id="payslipAmt" min="0" step="0.01" placeholder="Enter to compare with calculated pay"/></div>
-
-        <button class="btn btn-brown btn-full" onclick="calculatePay()">Calculate Pay 💵</button>
-
-        <div class="pay-result" id="payResult">
-          <div class="pay-row"><span class="pay-lbl" id="regLabel">Regular pay</span><span class="pay-val" id="regPay">—</span></div>
-          <div class="pay-row"><span class="pay-lbl" id="otLabel">Overtime pay</span><span class="pay-val" id="otPay">—</span></div>
-          <div class="pay-row"><span class="pay-lbl">Hours used</span><span class="pay-val" id="hoursUsed">—</span></div>
-          <div class="pay-total-row"><span class="pay-total-lbl">Calculated Total</span><span class="pay-total-val" id="totalPay">$0.00</span></div>
-          <div id="compareWrap" style="display:none;border-top:1px dashed var(--border);margin-top:8px;padding-top:4px;">
-            <div class="pay-row"><span class="pay-lbl">Your Payslip</span><span class="pay-val" id="payslipShow">—</span></div>
-            <div class="pay-row"><span class="pay-lbl">Difference</span><span class="pay-val" id="diffShow">—</span></div>
-            <span class="compare-badge" id="compareBadge"></span>
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">All Subscriptions</div>
+            <div class="entry-list" id="subBody"></div>
+            <div class="empty-state" id="subEmpty" style="display:none">No subscriptions — tap + to add one</div>
+            <div class="field-help" style="margin-top:10px;">
+              Auto-generated entries appear in <strong>Expenses</strong> with a dashed <span class="badge badge-sub">SUB</span> badge. Stop a subscription here to halt future entries.
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-title"><span class="cticon ci-amber">📈</span> Hours at a Glance</div>
-        <div class="stats-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
-          <div class="stat-box"><div class="sv" id="payTsTotal">—</div><div class="sl">Total Hrs (All)</div></div>
-          <div class="stat-box accent-amber"><div class="sv" id="payTsOT">—</div><div class="sl">Overtime Hrs</div></div>
-          <div class="stat-box accent-brown"><div class="sv" id="payTsWeeks">—</div><div class="sl">Weeks Logged</div></div>
-          <div class="stat-box accent-blue"><div class="sv" id="payTsAvg">—</div><div class="sl">Avg / Week</div></div>
-        </div>
-        <hr class="div"/>
-        <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;">
-          To calculate pay for a specific date range, first go to the <strong>Timesheet</strong> tab, apply a date filter, then come back here and choose <em>"Filtered Date Range"</em> from the dropdown above.
-        </p>
-      </div>
-
+      <button class="fab" onclick="openSubForm()" aria-label="Add">+</button>
     </div>
-  </div>
+
+    <!-- ── PAYSLIPS TAB ──────────────────────────────────────────────── -->
+    <div class="tab-pane" id="tab-payslips">
+      <div class="two-col">
+
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Summary</div>
+            <div class="stats-grid cols-4">
+              <div class="stat-box"><div class="sv" id="psCount">—</div><div class="sl">Slips</div></div>
+              <div class="stat-box blue"><div class="sv" id="psPaidTotal">$0</div><div class="sl">Paid</div></div>
+              <div class="stat-box amber"><div class="sv" id="psExpTotal">$0</div><div class="sl">Expected</div></div>
+              <div class="stat-box brown"><div class="sv" id="psDiffTotal">$0</div><div class="sl">Net Diff</div></div>
+            </div>
+            <div class="field-help">
+              <strong>Diff</strong> = Paid − (timesheet hours covering same range × rate). Each timesheet entry covers Mon→Sun of its week ending.
+            </div>
+          </div>
+        </div>
+
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">
+              <span>Custom Range Compare</span>
+            </div>
+            <div class="form-group">
+              <div class="form-row"><label>From</label><div class="field"><input type="date" id="cmpFrom"/></div></div>
+              <div class="form-row"><label>To</label><div class="field"><input type="date" id="cmpTo"/></div></div>
+              <div class="form-row"><label>Rate ($/hr)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="cmpRate" inputmode="decimal" step="0.01" placeholder="13.50"/></div></div></div>
+              <div class="form-row"><label>OT Rate ($/hr)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="cmpOtRate" inputmode="decimal" step="0.01" placeholder="auto: 1.5×"/></div></div></div>
+            </div>
+            <button class="btn btn-blue btn-full" onclick="runCmp()">Compare</button>
+            <div class="result" id="cmpResult">
+              <div class="result-row"><span class="result-lbl">Hours worked</span><span class="result-val" id="cmpHrs">—</span></div>
+              <div class="result-row"><span class="result-lbl">Expected pay</span><span class="result-val" id="cmpExp">—</span></div>
+              <div class="result-row"><span class="result-lbl">Paid</span><span class="result-val" id="cmpPaid">—</span></div>
+              <div class="result-total"><span class="result-total-lbl">Difference</span><span class="result-total-val" id="cmpDiff">$0.00</span></div>
+              <span class="compare-pill" id="cmpBadge"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">
+              <span>History</span>
+              <button class="btn-link" onclick="exportPsCsv()">⬇ CSV</button>
+            </div>
+            <div class="list-toolbar">
+              <input class="search-input" type="text" id="psSearch" placeholder="Search reference or notes" oninput="renderPayslips()"/>
+              <select id="psPageSize" onchange="renderPayslips()">
+                <option>10</option><option selected>25</option><option>50</option><option>100</option>
+              </select>
+            </div>
+            <div class="entry-list" id="psBody"></div>
+            <div class="empty-state" id="psEmpty" style="display:none">No payslips yet — tap + to add</div>
+            <div class="list-footer">
+              <span id="psPageInfo">—</span>
+              <div class="pager" id="psPager"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <button class="fab" onclick="openPsForm()" aria-label="Add">+</button>
+    </div>
+
+    <!-- ── PAY CALCULATOR TAB ────────────────────────────────────────── -->
+    <div class="tab-pane" id="tab-pay">
+      <div class="two-col">
+
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Hours at a Glance</div>
+            <div class="stats-grid cols-4">
+              <div class="stat-box"><div class="sv" id="payTsTotal">—</div><div class="sl">Total Hrs</div></div>
+              <div class="stat-box amber"><div class="sv" id="payTsOT">—</div><div class="sl">OT Hrs</div></div>
+              <div class="stat-box brown"><div class="sv" id="payTsWeeks">—</div><div class="sl">Weeks</div></div>
+              <div class="stat-box blue"><div class="sv" id="payTsAvg">—</div><div class="sl">Avg/Wk</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="full-col">
+          <div class="section">
+            <div class="section-title">Calculator</div>
+            <div class="form-group">
+              <div class="form-row"><label>Use hours from</label><div class="field"><select id="paySource" onchange="onPaySourceChange()" style="text-align:right;border:none;background:transparent;font-family:inherit;font-size:var(--t-body);width:100%;-webkit-appearance:none;outline:none;">
+                <option value="alltime">All-time timesheet</option>
+                <option value="filtered">Filtered range</option>
+                <option value="manual">Enter manually</option>
+              </select></div></div>
+              <div class="form-row" id="manualWrap" style="display:none"><label>Hours</label><div class="field"><input type="number" id="manualHrs" inputmode="decimal" step="0.5" placeholder="0"/></div></div>
+              <div class="form-row"><label>Pay rate ($/hr)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="payRate" inputmode="decimal" step="0.01" placeholder="13.50"/></div></div></div>
+              <div class="form-row"><label>OT rate ($/hr)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="otRate" inputmode="decimal" step="0.01" placeholder="auto: 1.5×"/></div></div></div>
+              <div class="form-row"><label>Payslip ($)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="payslipAmt" inputmode="decimal" step="0.01" placeholder="optional, to compare"/></div></div></div>
+            </div>
+
+            <div class="form-group" id="rangePicker" style="display:none">
+              <div class="form-row"><label>From</label><div class="field"><input type="date" id="tsFrom"/></div></div>
+              <div class="form-row"><label>To</label><div class="field"><input type="date" id="tsTo"/></div></div>
+            </div>
+
+            <button class="btn btn-brown btn-full" onclick="calculatePay()">Calculate Pay</button>
+
+            <div class="result" id="payResult">
+              <div class="result-row"><span class="result-lbl" id="regLabel">Regular</span><span class="result-val" id="regPay">—</span></div>
+              <div class="result-row"><span class="result-lbl" id="otLabel">Overtime</span><span class="result-val" id="otPay">—</span></div>
+              <div class="result-row"><span class="result-lbl">Hours used</span><span class="result-val" id="hoursUsed">—</span></div>
+              <div class="result-total"><span class="result-total-lbl">Total</span><span class="result-total-val" id="totalPay">$0.00</span></div>
+              <div id="compareWrap" style="display:none;border-top:1px dashed var(--border);margin-top:10px;padding-top:8px;">
+                <div class="result-row"><span class="result-lbl">Payslip</span><span class="result-val" id="payslipShow">—</span></div>
+                <div class="result-row"><span class="result-lbl">Difference</span><span class="result-val" id="diffShow">—</span></div>
+                <span class="compare-pill" id="compareBadge"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /main-scroll -->
+
+  <!-- Bottom Tab Bar -->
+  <nav class="tabbar" id="tabbar">
+    <button class="tabbar-btn active" data-tab="timesheet" onclick="switchTab('timesheet',this)">
+      <span class="ico">⏱</span><span class="lbl">Hours</span>
+    </button>
+    <button class="tabbar-btn" data-tab="expenses" onclick="switchTab('expenses',this)">
+      <span class="ico">💳</span><span class="lbl">Expenses</span>
+    </button>
+    <button class="tabbar-btn" data-tab="subscriptions" onclick="switchTab('subscriptions',this)">
+      <span class="ico">🔁</span><span class="lbl">Subs</span>
+    </button>
+    <button class="tabbar-btn" data-tab="payslips" onclick="switchTab('payslips',this)">
+      <span class="ico">💵</span><span class="lbl">Payslips</span>
+    </button>
+    <button class="tabbar-btn" data-tab="pay" onclick="switchTab('pay',this)">
+      <span class="ico">🧮</span><span class="lbl">Calc</span>
+    </button>
+  </nav>
 
 </div><!-- /mainApp -->
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!--  CATEGORY MANAGER MODAL                                                -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<div class="modal-bg" id="catModal">
-  <div class="modal">
-    <div class="modal-title"><span class="cticon ci-amber">⚙</span> Manage Categories</div>
-    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.5;">
-      Add, rename, or delete expense categories. When deleting, expenses in that category will be moved to "Other".
-    </p>
+<!-- ════════════════════════════════════════════════════════════════════
+     SHEETS (form & detail modals)
+     ════════════════════════════════════════════════════════════════════ -->
 
-    <label>Category Name</label>
-    <input type="text" id="newCatName" placeholder="e.g. Health, Software, Bills"/>
-
-    <div class="field-row" style="margin-top:8px;">
-      <div>
-        <label>Icon (emoji)</label>
-        <input type="text" id="newCatIcon" placeholder="📦" maxlength="4"/>
-      </div>
-      <div>
-        <label>Color</label>
-        <input type="color" id="newCatColor" value="#8b4513" style="height:40px;cursor:pointer;padding:4px;"/>
-      </div>
+<!-- TIMESHEET FORM SHEET -->
+<div class="sheet-bg" id="tsFormBg" onclick="closeSheet('tsForm')"></div>
+<div class="sheet" id="tsForm">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('tsForm')">Cancel</button>
+    <div class="sheet-title" id="tsFormTitle">Log Week</div>
+    <button class="sheet-action" onclick="saveTimesheet()" id="tsFormSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <div class="form-row"><label>Week ending</label><div class="field"><input type="date" id="weekDate" onchange="updateWeekInfo()"/></div></div>
     </div>
+    <div class="field-help" id="weekInfo"></div>
+    <div class="field-err" id="dateErr">Please select a Sunday</div>
+    <div class="form-group">
+      <div class="form-row"><label>Regular hrs</label><div class="field"><input type="number" id="regHours" inputmode="decimal" step="0.5" placeholder="37.5"/></div></div>
+      <div class="form-row"><label>Overtime hrs</label><div class="field"><input type="number" id="otHours" inputmode="decimal" step="0.5" placeholder="0"/></div></div>
+    </div>
+    <div class="field-err" id="hoursErr">Hours must be 0–168</div>
+    <div class="form-group">
+      <div class="form-row"><label>Notes</label><div class="field"><input type="text" id="tsNotes" placeholder="optional"/></div></div>
+    </div>
+    <input type="hidden" id="tsEditId"/>
+    <button class="btn btn-red btn-full" id="tsDeleteBtn" style="margin-top:14px;display:none;" onclick="deleteCurrentTs()">Delete this entry</button>
+  </div>
+</div>
 
+<!-- EXPENSE FORM SHEET -->
+<div class="sheet-bg" id="expFormBg" onclick="closeSheet('expForm')"></div>
+<div class="sheet" id="expForm">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('expForm')">Cancel</button>
+    <div class="sheet-title" id="expFormTitle">Add Expense</div>
+    <button class="sheet-action" onclick="saveExpense()" id="expFormSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <div class="form-row"><label>Date</label><div class="field"><input type="date" id="expDate"/></div></div>
+      <div class="form-row"><label>Category</label><div class="field">
+        <div class="combo">
+          <input type="text" id="expCat" placeholder="Tap to pick or type new" autocomplete="off"
+                 onfocus="openCombo('expCat')" oninput="filterCombo('expCat')"/>
+        </div>
+      </div></div>
+      <div class="form-row"><label>Amount</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="expAmt" inputmode="decimal" step="0.01" placeholder="0.00"/></div></div></div>
+      <div class="form-row"><label>Description</label><div class="field"><input type="text" id="expDesc" placeholder="e.g. Lunch with client"/></div></div>
+      <div class="form-row"><label>Reference</label><div class="field"><input type="text" id="expRef" placeholder="optional"/></div></div>
+    </div>
+    <div class="field-err" id="expAmtErr">Please enter a valid amount</div>
+    <input type="hidden" id="expEditId"/>
+    <button class="btn btn-red btn-full" id="expDeleteBtn" style="margin-top:14px;display:none;" onclick="deleteCurrentExp()">Delete this entry</button>
+  </div>
+</div>
+
+<!-- SUBSCRIPTION FORM SHEET -->
+<div class="sheet-bg" id="subFormBg" onclick="closeSheet('subForm')"></div>
+<div class="sheet" id="subForm">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('subForm')">Cancel</button>
+    <div class="sheet-title" id="subFormTitle">Add Subscription</div>
+    <button class="sheet-action" onclick="saveSubscription()" id="subFormSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <div class="form-row"><label>Name</label><div class="field"><input type="text" id="subName" placeholder="e.g. Netflix"/></div></div>
+      <div class="form-row"><label>Category</label><div class="field">
+        <div class="combo">
+          <input type="text" id="subCat" placeholder="Tap to pick or type new" autocomplete="off"
+                 onfocus="openCombo('subCat')" oninput="filterCombo('subCat')"/>
+        </div>
+      </div></div>
+      <div class="form-row"><label>Amount</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="subAmt" inputmode="decimal" step="0.01" placeholder="0.00"/></div></div></div>
+      <div class="form-row"><label>Day of month</label><div class="field"><input type="number" id="subDay" inputmode="numeric" min="1" max="31" placeholder="1–31"/></div></div>
+      <div class="form-row"><label>Start date</label><div class="field"><input type="date" id="subStart"/></div></div>
+      <div class="form-row"><label>End date</label><div class="field"><input type="date" id="subEnd" placeholder="optional"/></div></div>
+      <div class="form-row"><label>Notes</label><div class="field"><input type="text" id="subNotes" placeholder="optional"/></div></div>
+    </div>
+    <div class="field-err" id="subErr">Please fill required fields</div>
+    <input type="hidden" id="subEditId"/>
+    <div style="display:flex;gap:8px;margin-top:14px;" id="subEditActions">
+      <button class="btn btn-ghost btn-full" id="subToggleBtn" onclick="toggleCurrentSub()" style="display:none;">Stop</button>
+      <button class="btn btn-red btn-full" id="subDeleteBtn" style="display:none;" onclick="deleteCurrentSub()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYSLIP FORM SHEET -->
+<div class="sheet-bg" id="psFormBg" onclick="closeSheet('psForm')"></div>
+<div class="sheet" id="psForm">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('psForm')">Cancel</button>
+    <div class="sheet-title" id="psFormTitle">Add Payslip</div>
+    <button class="sheet-action" onclick="savePayslip()" id="psFormSave">Save</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <div class="form-row"><label>From</label><div class="field"><input type="date" id="psFrom"/></div></div>
+      <div class="form-row"><label>To</label><div class="field"><input type="date" id="psTo"/></div></div>
+      <div class="form-row"><label>Hours</label><div class="field"><input type="number" id="psHours" inputmode="decimal" step="0.5" placeholder="75.0"/></div></div>
+      <div class="form-row"><label>Rate ($/hr)</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="psRate" inputmode="decimal" step="0.01" placeholder="13.50"/></div></div></div>
+      <div class="form-row"><label>Amount paid</label><div class="field"><div class="cur-wrap"><span class="cur-sym">$</span><input type="number" id="psAmt" inputmode="decimal" step="0.01" placeholder="Total"/></div></div></div>
+      <div class="form-row"><label>Reference</label><div class="field"><input type="text" id="psRef" placeholder="e.g. Payslip #2026-04"/></div></div>
+      <div class="form-row"><label>Notes</label><div class="field"><input type="text" id="psNotes" placeholder="optional"/></div></div>
+    </div>
+    <div class="field-err" id="psErr">Please fill From, To, Hours, Rate, and Amount</div>
+    <input type="hidden" id="psEditId"/>
+    <button class="btn btn-red btn-full" id="psDeleteBtn" style="margin-top:14px;display:none;" onclick="deleteCurrentPs()">Delete this entry</button>
+  </div>
+</div>
+
+<!-- DETAIL VIEW SHEET (used for read-only details before edit) -->
+<div class="sheet-bg" id="detailBg" onclick="closeSheet('detail')"></div>
+<div class="sheet" id="detail">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('detail')">Close</button>
+    <div class="sheet-title" id="detailTitle">Details</div>
+    <button class="sheet-action" onclick="editFromDetail()" id="detailEdit">Edit</button>
+  </div>
+  <div class="sheet-body" id="detailBody"></div>
+</div>
+
+<!-- CATEGORY MANAGER SHEET -->
+<div class="sheet-bg" id="catMgrBg" onclick="closeSheet('catMgr')"></div>
+<div class="sheet" id="catMgr">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('catMgr')">Done</button>
+    <div class="sheet-title">Manage Categories</div>
+    <span style="width:48px;"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="field-help" style="margin:0 0 12px;">Add, rename, recolor, or delete categories. Deleting moves entries to "Other".</div>
+    <div class="form-group">
+      <div class="form-row"><label>Name</label><div class="field"><input type="text" id="newCatName" placeholder="e.g. Health, Bills"/></div></div>
+      <div class="form-row"><label>Icon</label><div class="field"><input type="text" id="newCatIcon" placeholder="📦" maxlength="4"/></div></div>
+      <div class="form-row"><label>Color</label><div class="field"><input type="color" id="newCatColor" value="#8b4513"/></div></div>
+    </div>
     <input type="hidden" id="catEditId"/>
-    <button class="btn btn-green btn-full" id="catSaveBtn" onclick="saveCategory()" style="margin-top:14px;">Add Category</button>
-
+    <button class="btn btn-green btn-full" id="catSaveBtn" onclick="saveCategory()">Add Category</button>
+    <button class="btn btn-ghost btn-full" id="catCancelEditBtn" onclick="cancelCatEdit()" style="display:none;margin-top:8px;">Cancel edit</button>
     <hr class="div"/>
-    <div class="sub-title">Existing Categories</div>
+    <div class="section-title" style="margin:0 0 8px;">Existing</div>
     <div class="cat-chip-list" id="catChipList"></div>
+  </div>
+</div>
 
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeCatManager()">Close</button>
+<!-- MENU SHEET (top-right ⋯) -->
+<div class="sheet-bg" id="menuBg" onclick="closeSheet('menu')"></div>
+<div class="sheet" id="menu">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-close" onclick="closeSheet('menu')">Close</button>
+    <div class="sheet-title">Account</div>
+    <span style="width:48px;"></span>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <div class="form-row"><label>Signed in as</label><div class="field" id="menuEmail" style="text-align:right;color:var(--muted);"></div></div>
+      <div class="form-row" onclick="openCatManager()" style="cursor:pointer;"><label>Manage categories</label><div class="field" style="text-align:right;color:var(--muted);">→</div></div>
     </div>
+    <button class="btn btn-red btn-full" onclick="doSignOut()" style="margin-top:14px;">Sign Out</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ══════════════════════════════════════════════════════════════════════ -->
-<!--  Firebase SDKs                                                         -->
-<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-// ════════════════════════════════════════════════════════════════════════
-//  FIREBASE INIT
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   FIREBASE INIT
+   ════════════════════════════════════════════════════════════════════════ */
 firebase.initializeApp({
   apiKey:            "AIzaSyDglC8yJtLMzCtwTJavnsBRwDevI0Ua3I8",
   authDomain:        "timesheet-tracker-6792f.firebaseapp.com",
@@ -1472,28 +1639,28 @@ firebase.initializeApp({
   messagingSenderId: "107344940471",
   appId:             "1:107344940471:web:aac4daf612676ae88a6c32"
 });
-
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// ════════════════════════════════════════════════════════════════════════
-//  GLOBAL STATE
-// ════════════════════════════════════════════════════════════════════════
-let currentUser  = null;
-let tsEntries    = [];   // timesheet
-let expEntries   = [];   // expenses (incl. auto-generated subscription entries)
-let subEntries   = [];   // subscriptions
-let psEntries    = [];   // payslips
-let categories   = [];   // user's expense categories
-
+/* ════════════════════════════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let tsEntries   = [];
+let expEntries  = [];
+let subEntries  = [];
+let psEntries   = [];
+let categories  = [];
 let tsFilterFrom = '', tsFilterTo = '';
+let autoCreatedAny = false;
 
-// Sort/page state for each table
 const tsState  = { sort: 'date', dir: 'desc', page: 1 };
 const expState = { sort: 'date', dir: 'desc', page: 1 };
 const psState  = { sort: 'from', dir: 'desc', page: 1 };
 
-// Default categories used on first signup
+let detailContext = null;     // { kind, id } for the currently-open detail sheet
+let comboTarget = null;       // currently-open combobox input id
+
 const DEFAULT_CATEGORIES = [
   { name: 'Food',          icon: '🍽', color: '#e8a870' },
   { name: 'Transport',     icon: '🚗', color: '#6a9fd8' },
@@ -1504,9 +1671,17 @@ const DEFAULT_CATEGORIES = [
   { name: 'Other',         icon: '📦', color: '#aaaaaa' }
 ];
 
-// ════════════════════════════════════════════════════════════════════════
-//  AUTH
-// ════════════════════════════════════════════════════════════════════════
+const TAB_TITLES = {
+  timesheet: 'Timesheet',
+  expenses:  'Expenses',
+  subscriptions: 'Subscriptions',
+  payslips:  'Payslips',
+  pay:       'Pay Calculator'
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   AUTH
+   ════════════════════════════════════════════════════════════════════════ */
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
@@ -1520,15 +1695,12 @@ auth.onAuthStateChanged(user => {
 
 function showLogin() {
   document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display     = 'none';
+  document.getElementById('mainApp').classList.remove('visible');
 }
-
 function showApp(user) {
   document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display     = 'block';
-  const initial = (user.email || '?')[0].toUpperCase();
-  document.getElementById('userAvatar').textContent = initial;
-  document.getElementById('userEmail').textContent  = user.email || '';
+  document.getElementById('mainApp').classList.add('visible');
+  document.getElementById('menuEmail').textContent = user.email || '';
   initDefaults();
 }
 
@@ -1539,75 +1711,69 @@ async function doLogin() {
   document.getElementById('loginError').style.display = 'none';
   if (!email || !pass) { showLoginErr('Please enter your email and password.'); return; }
   btn.disabled = true; btn.textContent = 'Signing in…';
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Sign In →';
+  try { await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e) {
+    btn.disabled = false; btn.textContent = 'Sign In';
     showLoginErr(friendlyAuthError(e.code));
   }
 }
-
 function doSignOut() {
   if (!confirm('Sign out?')) return;
+  closeSheet('menu');
   auth.signOut();
 }
-
 function showLoginErr(msg) {
   const el = document.getElementById('loginError');
-  el.textContent  = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
-
 function friendlyAuthError(code) {
-  const map = {
-    'auth/user-not-found':      'No account found with that email.',
-    'auth/wrong-password':      'Incorrect password. Please try again.',
-    'auth/invalid-email':       'Please enter a valid email address.',
-    'auth/too-many-requests':   'Too many failed attempts. Please try again later.',
-    'auth/invalid-credential':  'Incorrect email or password.',
+  return ({
+    'auth/user-not-found':         'No account found with that email.',
+    'auth/wrong-password':         'Incorrect password.',
+    'auth/invalid-email':          'Please enter a valid email address.',
+    'auth/too-many-requests':      'Too many failed attempts. Try again later.',
+    'auth/invalid-credential':     'Incorrect email or password.',
     'auth/network-request-failed': 'Network error. Check your connection.',
-  };
-  return map[code] || 'Sign-in error (' + code + ').';
+  })[code] || 'Sign-in error (' + code + ').';
 }
-
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
 });
 
-// ════════════════════════════════════════════════════════════════════════
-//  FIRESTORE COLLECTION HELPERS
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   FIRESTORE COLLECTION HELPERS
+   ════════════════════════════════════════════════════════════════════════ */
 function tsCol()  { return db.collection('users').doc(currentUser.uid).collection('timesheet'); }
 function expCol() { return db.collection('users').doc(currentUser.uid).collection('expenses'); }
 function subCol() { return db.collection('users').doc(currentUser.uid).collection('subscriptions'); }
 function psCol()  { return db.collection('users').doc(currentUser.uid).collection('payslips'); }
 function catCol() { return db.collection('users').doc(currentUser.uid).collection('categories'); }
 
-// ════════════════════════════════════════════════════════════════════════
-//  SYNC BADGE
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   SYNC BADGE
+   ════════════════════════════════════════════════════════════════════════ */
 function setSyncOk(m)   { const b=document.getElementById('syncBadge'); b.className='ok';  document.getElementById('syncMsg').textContent=m; }
 function setSyncErr(m)  { const b=document.getElementById('syncBadge'); b.className='err'; document.getElementById('syncMsg').textContent=m; }
 function setSyncWait(m) { const b=document.getElementById('syncBadge'); b.className='';    document.getElementById('syncMsg').textContent=m; }
 
-// ════════════════════════════════════════════════════════════════════════
-//  HELPERS
-// ════════════════════════════════════════════════════════════════════════
-const fmt      = n => Number(n).toFixed(1);
-const fmtM     = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+/* ════════════════════════════════════════════════════════════════════════
+   FORMATTING HELPERS
+   ════════════════════════════════════════════════════════════════════════ */
+const fmt   = n => Number(n).toFixed(1);
+const fmtM  = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const isSunday = s => new Date(s+'T00:00:00').getDay() === 0;
-const dispDate = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-const dispDateFull = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—';
+const dispDate = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}) : '—';
+const dispDateShort = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short'}) : '—';
+const dispDateFull  = s => s ? new Date(s+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—';
 const todayStr = () => new Date().toISOString().split('T')[0];
 const escHtml  = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2800);
+  setTimeout(()=>t.classList.remove('show'), 2600);
 }
 
-// Build YYYY-MM-DD from a Date
 function ymd(d) {
   const yy = d.getFullYear();
   const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -1615,34 +1781,53 @@ function ymd(d) {
   return `${yy}-${mm}-${dd}`;
 }
 
-// Compute the Sunday of the week containing a given date (Sunday = 0)
 function sundayOfWeek(date) {
-  const d = new Date(date);
-  d.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
   const diff = (7 - d.getDay()) % 7;
   d.setDate(d.getDate() + diff);
   return d;
 }
 
-// All Sundays strictly before todayStr that are >= startStr (returns array of YYYY-MM-DD)
 function sundaysBetween(startStr, endStr) {
   const out = [];
   if (!startStr) return out;
   let d = new Date(startStr+'T00:00:00');
-  // Move to first Sunday on/after startStr
   const offset = (7 - d.getDay()) % 7;
   d.setDate(d.getDate() + offset);
   const end = new Date(endStr+'T00:00:00');
-  while (d <= end) {
-    out.push(ymd(d));
-    d.setDate(d.getDate() + 7);
-  }
+  while (d <= end) { out.push(ymd(d)); d.setDate(d.getDate() + 7); }
   return out;
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  LOAD ALL DATA
-// ════════════════════════════════════════════════════════════════════════
+/* For an entry dated on a Sunday X, the work week is Mon (X-6) → Sun X.
+   Returns [weekStart, weekEnd] as 'YYYY-MM-DD' strings. */
+function workWeekFor(sundayStr) {
+  const sun = new Date(sundayStr+'T00:00:00');
+  const mon = new Date(sun); mon.setDate(sun.getDate() - 6);
+  return [ymd(mon), ymd(sun)];
+}
+
+/* Whether two date ranges overlap (inclusive). */
+function rangesOverlap(a1, a2, b1, b2) {
+  return a1 <= b2 && b1 <= a2;
+}
+
+/* Sum timesheet hours where the entry's WORK WEEK overlaps [from, to]. */
+function tsHoursInRange(from, to) {
+  let reg = 0, ot = 0;
+  tsEntries.forEach(e => {
+    const [ws, we] = workWeekFor(e.date);
+    if (rangesOverlap(ws, we, from, to)) {
+      reg += (e.reg || 0);
+      ot  += (e.ot  || 0);
+    }
+  });
+  return { reg, ot, total: reg + ot };
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LOAD ALL DATA
+   ════════════════════════════════════════════════════════════════════════ */
 async function loadAll() {
   setSyncWait('Loading…');
   try {
@@ -1659,14 +1844,11 @@ async function loadAll() {
     psEntries  = psSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     categories = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Seed default categories on first run
     if (!categories.length) await seedDefaultCategories();
 
-    // Run background processors
     await processAutoTimesheets();
     await processSubscriptions();
 
-    // Reload after auto-creates so renders see fresh data
     if (autoCreatedAny) {
       const [ts2, ex2] = await Promise.all([
         tsCol().orderBy('date','desc').get(),
@@ -1677,8 +1859,8 @@ async function loadAll() {
       autoCreatedAny = false;
     }
 
-    setSyncOk('Synced ✓');
-    refreshCatSelects();
+    setSyncOk('Synced');
+    refreshCatFilter();
     renderTimesheet();
     renderExpenses();
     renderSubscriptions();
@@ -1691,83 +1873,156 @@ async function loadAll() {
   }
 }
 
-let autoCreatedAny = false;
-
 async function seedDefaultCategories() {
   const batch = db.batch();
   const col = catCol();
-  DEFAULT_CATEGORIES.forEach(c => {
-    const ref = col.doc();
-    batch.set(ref, c);
-  });
+  DEFAULT_CATEGORIES.forEach(c => batch.set(col.doc(), c));
   await batch.commit();
   const snap = await col.get();
   categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  DEFAULTS ON APP LOAD
-// ════════════════════════════════════════════════════════════════════════
 function initDefaults() {
   const today = new Date();
   const sun = sundayOfWeek(today);
-  document.getElementById('weekDate').value = ymd(sun);
-  updateWeekInfo();
-
+  const sunStr = ymd(sun);
+  const elWeek = document.getElementById('weekDate');
+  if (elWeek) elWeek.value = sunStr;
   document.getElementById('expDate').value  = todayStr();
-  document.getElementById('expMonth').value = todayStr().slice(0,7);
   document.getElementById('subStart').value = todayStr();
   document.getElementById('subDay').value   = today.getDate();
 }
 
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tabbar-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  document.getElementById('screenTitle').textContent = TAB_TITLES[name] || name;
+  document.getElementById('rangePicker').style.display = (name === 'pay' && document.getElementById('paySource').value === 'filtered') ? 'block' : 'none';
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  CATEGORY MANAGEMENT
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   SHEETS — open/close
+   ════════════════════════════════════════════════════════════════════════ */
+function openSheet(id) {
+  document.getElementById(id+'Bg').classList.add('show');
+  document.getElementById(id).classList.add('show');
+}
+function closeSheet(id) {
+  document.getElementById(id+'Bg').classList.remove('show');
+  document.getElementById(id).classList.remove('show');
+  closeAllCombos();
+}
+
+function openMenu() {
+  openSheet('menu');
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   COMBOBOX (category picker that allows new entries)
+   ════════════════════════════════════════════════════════════════════════ */
+function openCombo(inputId) {
+  closeAllCombos();
+  comboTarget = inputId;
+  const input = document.getElementById(inputId);
+  // Build list element if missing
+  let list = document.getElementById(inputId + '_list');
+  if (!list) {
+    list = document.createElement('div');
+    list.id = inputId + '_list';
+    list.className = 'combo-list';
+    input.closest('.combo').appendChild(list);
+  }
+  renderComboList(inputId, input.value);
+  list.classList.add('show');
+}
+function closeAllCombos() {
+  document.querySelectorAll('.combo-list').forEach(l => l.classList.remove('show'));
+}
+function filterCombo(inputId) {
+  const input = document.getElementById(inputId);
+  renderComboList(inputId, input.value);
+  const list = document.getElementById(inputId + '_list');
+  if (list) list.classList.add('show');
+}
+function renderComboList(inputId, query) {
+  const list = document.getElementById(inputId + '_list');
+  if (!list) return;
+  const q = (query || '').toLowerCase().trim();
+  const filtered = categories
+    .filter(c => !q || c.name.toLowerCase().includes(q))
+    .sort((a,b) => a.name.localeCompare(b.name));
+  let html = filtered.map(c =>
+    `<div class="combo-item" onclick="pickCombo('${inputId}', '${escHtml(c.name).replace(/'/g,"&#39;")}')">
+       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.color||'#aaa'};"></span>
+       <span>${c.icon||'📦'} ${escHtml(c.name)}</span>
+     </div>`
+  ).join('');
+  // Show "create new" if user typed something not exactly matching
+  if (q && !categories.some(c => c.name.toLowerCase() === q)) {
+    html += `<div class="combo-item create" onclick="createComboCategory('${inputId}', '${escHtml(query).replace(/'/g,"&#39;")}')">
+              + Add &ldquo;${escHtml(query)}&rdquo; as a new category
+            </div>`;
+  }
+  if (!html) html = '<div class="combo-item" style="color:var(--muted);font-style:italic;">No categories</div>';
+  list.innerHTML = html;
+}
+function pickCombo(inputId, name) {
+  document.getElementById(inputId).value = name;
+  closeAllCombos();
+}
+async function createComboCategory(inputId, name) {
+  // Auto-create with default styling; appears in dropdown next time too
+  setSyncWait('Adding…');
+  try {
+    const docRef = await catCol().add({ name: name.trim(), icon: '📦', color: '#8b4513' });
+    categories.push({ id: docRef.id, name: name.trim(), icon: '📦', color: '#8b4513' });
+    refreshCatFilter();
+    document.getElementById(inputId).value = name.trim();
+    closeAllCombos();
+    setSyncOk('Synced');
+    showToast('Category "' + name + '" added');
+  } catch(e) {
+    setSyncErr('Save failed');
+    showToast('Could not add category');
+    console.error(e);
+  }
+}
+
+// Click outside to close combos
+document.addEventListener('click', e => {
+  if (!e.target.closest('.combo')) closeAllCombos();
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+   CATEGORIES — full CRUD + filter dropdown refresh
+   ════════════════════════════════════════════════════════════════════════ */
 function getCategory(name) {
   return categories.find(c => c.name === name) ||
          { name: name || 'Other', icon: '📦', color: '#aaaaaa' };
 }
 
-function refreshCatSelects() {
+function refreshCatFilter() {
   const sorted = [...categories].sort((a,b)=>a.name.localeCompare(b.name));
-  const opts = sorted.map(c => `<option value="${escHtml(c.name)}">${c.icon||'📦'} ${escHtml(c.name)}</option>`).join('');
-
-  ['expCat','subCat'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const cur = el.value;
-    el.innerHTML = opts;
-    if (cur && sorted.some(c => c.name === cur)) el.value = cur;
-  });
-
-  // Filter dropdown gets an "All" option
   const filt = document.getElementById('expCatFilter');
-  if (filt) {
-    const cur = filt.value;
-    filt.innerHTML = '<option value="">All categories</option>' + opts;
-    if (cur) filt.value = cur;
-  }
+  if (!filt) return;
+  const cur = filt.value;
+  filt.innerHTML = '<option value="">All cat.</option>' +
+    sorted.map(c => `<option value="${escHtml(c.name)}">${c.icon||'📦'} ${escHtml(c.name)}</option>`).join('');
+  if (cur && sorted.some(c => c.name === cur)) filt.value = cur;
 }
 
 function openCatManager() {
-  document.getElementById('catModal').classList.add('show');
+  closeSheet('menu');     // in case it came from there
+  openSheet('catMgr');
   cancelCatEdit();
   renderCatChips();
-}
-function closeCatManager() {
-  document.getElementById('catModal').classList.remove('show');
 }
 
 function renderCatChips() {
   const list = document.getElementById('catChipList');
-  if (!categories.length) { list.innerHTML = '<div class="empty" style="padding:8px 0;">No categories yet</div>'; return; }
+  if (!categories.length) { list.innerHTML = '<div class="empty-state" style="padding:8px 0;">No categories yet</div>'; return; }
   const sorted = [...categories].sort((a,b)=>a.name.localeCompare(b.name));
   list.innerHTML = sorted.map(c => `
     <div class="cat-chip">
@@ -1786,6 +2041,7 @@ function editCategory(id) {
   document.getElementById('newCatColor').value = c.color || '#8b4513';
   document.getElementById('catEditId').value   = id;
   document.getElementById('catSaveBtn').textContent = 'Save Changes';
+  document.getElementById('catCancelEditBtn').style.display = 'block';
 }
 
 function cancelCatEdit() {
@@ -1794,6 +2050,7 @@ function cancelCatEdit() {
   document.getElementById('newCatColor').value = '#8b4513';
   document.getElementById('catEditId').value = '';
   document.getElementById('catSaveBtn').textContent = 'Add Category';
+  document.getElementById('catCancelEditBtn').style.display = 'none';
 }
 
 async function saveCategory() {
@@ -1801,20 +2058,15 @@ async function saveCategory() {
   const icon  = document.getElementById('newCatIcon').value.trim() || '📦';
   const color = document.getElementById('newCatColor').value || '#8b4513';
   const editId = document.getElementById('catEditId').value;
-
   if (!name) { showToast('Enter a category name'); return; }
-
-  // Disallow duplicates (except editing the same one)
   if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editId)) {
     showToast('A category with that name already exists'); return;
   }
-
   setSyncWait('Saving…');
   try {
     if (editId) {
       const oldName = categories.find(c => c.id === editId)?.name;
       await catCol().doc(editId).set({ name, icon, color });
-      // If renamed, update existing expenses & subscriptions referencing the old name
       if (oldName && oldName !== name) {
         const batch = db.batch();
         expEntries.filter(e => e.cat === oldName).forEach(e => batch.update(expCol().doc(e.id), { cat: name }));
@@ -1837,67 +2089,82 @@ async function saveCategory() {
 async function deleteCategory(id) {
   const c = categories.find(x => x.id === id); if (!c) return;
   if (c.name === 'Other') { showToast('"Other" is the fallback and cannot be deleted'); return; }
-  if (!confirm(`Delete category "${c.name}"? Existing expenses and subscriptions in this category will be moved to "Other".`)) return;
-
+  if (!confirm(`Delete category "${c.name}"? Entries will move to "Other".`)) return;
   setSyncWait('Deleting…');
   try {
     const batch = db.batch();
     expEntries.filter(e => e.cat === c.name).forEach(e => batch.update(expCol().doc(e.id), { cat: 'Other' }));
     subEntries.filter(s => s.cat === c.name).forEach(s => batch.update(subCol().doc(s.id), { cat: 'Other' }));
     batch.delete(catCol().doc(id));
-    // Ensure "Other" exists
     if (!categories.some(x => x.name === 'Other')) {
-      const ref = catCol().doc();
-      batch.set(ref, { name: 'Other', icon: '📦', color: '#aaaaaa' });
+      batch.set(catCol().doc(), { name: 'Other', icon: '📦', color: '#aaaaaa' });
     }
     await batch.commit();
     showToast('Category deleted');
     await loadAll();
     renderCatChips();
   } catch(e) {
-    setSyncErr('Delete failed'); console.error(e); showToast('Could not delete category');
+    setSyncErr('Delete failed'); console.error(e); showToast('Could not delete');
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  AUTO TIMESHEETS — silently fill 37.5h for missed past Sundays
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   AUTO-FILL TIMESHEET (background)
+   ════════════════════════════════════════════════════════════════════════ */
 async function processAutoTimesheets() {
-  // Find earliest meaningful start: earliest existing entry, else default to 30 days ago
   let start;
   if (tsEntries.length) {
-    const earliest = tsEntries.reduce((min, e) => (e.date < min ? e.date : min), tsEntries[0].date);
-    start = earliest;
+    start = tsEntries.reduce((min, e) => (e.date < min ? e.date : min), tsEntries[0].date);
   } else {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
+    const d = new Date(); d.setDate(d.getDate() - 30);
     start = ymd(d);
   }
-  // End = last Sunday strictly before today (so we never auto-fill the current/upcoming week)
   const today = new Date(); today.setHours(0,0,0,0);
   const lastSun = new Date(today);
-  // Sunday is 0; if today IS Sunday, last "completed" Sunday is yesterday's slot, but typically you log on Sunday so we use today−7
   lastSun.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()));
   if (lastSun < new Date(start+'T00:00:00')) return;
-
-  const targetSundays = sundaysBetween(start, ymd(lastSun));
-  const haveDates = new Set(tsEntries.map(e => e.date));
-  const missing = targetSundays.filter(d => !haveDates.has(d));
+  const targets = sundaysBetween(start, ymd(lastSun));
+  const have = new Set(tsEntries.map(e => e.date));
+  const missing = targets.filter(d => !have.has(d));
   if (!missing.length) return;
-
   const batch = db.batch();
-  missing.forEach(d => {
-    const ref = tsCol().doc();
-    batch.set(ref, { date: d, reg: 37.5, ot: 0, notes: '', auto: true });
-  });
+  missing.forEach(d => batch.set(tsCol().doc(), { date: d, reg: 37.5, ot: 0, notes: '', auto: true }));
   await batch.commit();
   autoCreatedAny = true;
   showToast(`Auto-added ${missing.length} missed week(s) at 37.5h`);
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  TIMESHEET — UI
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   TIMESHEET — UI
+   ════════════════════════════════════════════════════════════════════════ */
+function openTsForm(entry) {
+  cancelTsEdit();
+  if (entry) {
+    document.getElementById('tsFormTitle').textContent = 'Edit Week';
+    document.getElementById('weekDate').value = entry.date;
+    document.getElementById('regHours').value = entry.reg;
+    document.getElementById('otHours').value  = entry.ot || '';
+    document.getElementById('tsNotes').value  = entry.notes || '';
+    document.getElementById('tsEditId').value = entry.id;
+    document.getElementById('tsDeleteBtn').style.display = 'block';
+  } else {
+    document.getElementById('tsFormTitle').textContent = 'Log Week';
+    document.getElementById('weekDate').value = ymd(sundayOfWeek(new Date()));
+    document.getElementById('tsDeleteBtn').style.display = 'none';
+  }
+  updateWeekInfo();
+  openSheet('tsForm');
+}
+
+function cancelTsEdit() {
+  document.getElementById('regHours').value = '';
+  document.getElementById('otHours').value  = '';
+  document.getElementById('tsNotes').value  = '';
+  document.getElementById('tsEditId').value = '';
+  document.getElementById('dateErr').style.display = 'none';
+  document.getElementById('hoursErr').style.display = 'none';
+}
+
 function updateWeekInfo() {
   const val = document.getElementById('weekDate').value;
   const el  = document.getElementById('weekInfo');
@@ -1911,7 +2178,6 @@ function updateWeekInfo() {
     el.textContent = '✗ ' + d.toLocaleDateString('en-US',{weekday:'long'}) + ' — please pick a Sunday';
   }
 }
-document.getElementById('weekDate').addEventListener('change', updateWeekInfo);
 
 async function saveTimesheet() {
   const dateVal = document.getElementById('weekDate').value;
@@ -1920,74 +2186,71 @@ async function saveTimesheet() {
   const notes   = document.getElementById('tsNotes').value.trim();
   const editId  = document.getElementById('tsEditId').value;
   let valid = true;
-
   if (!dateVal || !isSunday(dateVal)) { document.getElementById('dateErr').style.display='block'; valid=false; }
   else { document.getElementById('dateErr').style.display='none'; }
-  if (reg < 0 || reg > 168) { document.getElementById('hoursErr').style.display='block'; valid=false; }
+  if (reg < 0 || reg > 168)            { document.getElementById('hoursErr').style.display='block'; valid=false; }
   else { document.getElementById('hoursErr').style.display='none'; }
   if (!valid) return;
 
-  // If not editing, check for duplicate
+  let targetId = editId || null;
   if (!editId) {
     const existing = tsEntries.find(e => e.date === dateVal);
     if (existing && !confirm('An entry for this week already exists. Replace it?')) return;
-    var targetId = existing ? existing.id : null;
-  } else {
-    var targetId = editId;
+    targetId = existing ? existing.id : null;
   }
 
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
   setSyncWait('Saving…');
   try {
     const payload = { date: dateVal, reg, ot, notes, auto: false };
     if (targetId) await tsCol().doc(targetId).set(payload);
     else          await tsCol().add(payload);
-    cancelTsEdit();
-    showToast(editId ? 'Week updated ✓' : 'Week saved ✓');
+    closeSheet('tsForm');
+    showToast(editId ? 'Week updated' : 'Week saved');
     await loadAll();
-  } catch(e) {
-    setSyncErr('Save failed'); showToast('Save failed.'); console.error(e);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save Week →';
-  }
+  } catch(e) { setSyncErr('Save failed'); showToast('Save failed'); console.error(e); }
 }
 
-function editTs(id) {
-  const e = tsEntries.find(x => x.id === id); if (!e) return;
-  document.getElementById('weekDate').value = e.date;
-  document.getElementById('regHours').value = e.reg;
-  document.getElementById('otHours').value  = e.ot || '';
-  document.getElementById('tsNotes').value  = e.notes || '';
-  document.getElementById('tsEditId').value = id;
-  document.getElementById('saveBtn').textContent = 'Update Week →';
-  document.getElementById('cancelEditBtn').style.display = 'block';
-  updateWeekInfo();
-  document.getElementById('weekDate').scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function cancelTsEdit() {
-  document.getElementById('regHours').value = '';
-  document.getElementById('otHours').value  = '';
-  document.getElementById('tsNotes').value  = '';
-  document.getElementById('tsEditId').value = '';
-  document.getElementById('saveBtn').textContent = 'Save Week →';
-  document.getElementById('cancelEditBtn').style.display = 'none';
-  document.getElementById('dateErr').style.display = 'none';
-  document.getElementById('hoursErr').style.display = 'none';
-}
-
-async function deleteTs(id, label) {
-  if (!confirm('Delete timesheet entry for ' + label + '?')) return;
+async function deleteCurrentTs() {
+  const id = document.getElementById('tsEditId').value;
+  const e = tsEntries.find(x => x.id === id);
+  if (!e || !confirm('Delete entry for ' + dispDate(e.date) + '?')) return;
   setSyncWait('Deleting…');
-  try { await tsCol().doc(id).delete(); showToast('Removed'); await loadAll(); }
-  catch(e) { setSyncErr('Delete failed'); console.error(e); }
+  try { await tsCol().doc(id).delete(); closeSheet('tsForm'); showToast('Removed'); await loadAll(); }
+  catch(err) { setSyncErr('Delete failed'); console.error(err); }
 }
 
-function sortTs(field) {
-  if (tsState.sort === field) tsState.dir = (tsState.dir === 'asc' ? 'desc' : 'asc');
-  else { tsState.sort = field; tsState.dir = 'desc'; }
-  renderTimesheet();
+function showTsDetail(id) {
+  const e = tsEntries.find(x => x.id === id); if (!e) return;
+  const tot = (e.reg||0) + (e.ot||0);
+  const status = e.auto ? '<span class="badge badge-auto">Auto</span>'
+    : tot >= 37 && tot <= 45 ? '<span class="badge badge-green">Normal</span>'
+    : tot < 37              ? '<span class="badge badge-red">Short</span>'
+    :                         '<span class="badge badge-amber">Long</span>';
+  const [ws, we] = workWeekFor(e.date);
+  detailContext = { kind: 'ts', id };
+  document.getElementById('detailTitle').textContent = dispDate(e.date);
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-lbl">Week ending</div><div class="detail-val">${dispDateFull(e.date)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Work week</div><div class="detail-val">${dispDateShort(ws)} – ${dispDateShort(we)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Regular hrs</div><div class="detail-val">${fmt(e.reg||0)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Overtime hrs</div><div class="detail-val">${fmt(e.ot||0)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Total hrs</div><div class="detail-val"><strong>${fmt(tot)}</strong></div></div>
+    <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val">${status}</div></div>
+    ${e.notes ? `<div class="detail-row"><div class="detail-lbl">Notes</div><div class="detail-val">${escHtml(e.notes)}</div></div>` : ''}
+  `;
+  openSheet('detail');
+}
+
+function editFromDetail() {
+  if (!detailContext) return;
+  const { kind, id } = detailContext;
+  closeSheet('detail');
+  setTimeout(() => {
+    if (kind === 'ts')   openTsForm (tsEntries.find(x => x.id === id));
+    if (kind === 'exp')  openExpForm(expEntries.find(x => x.id === id));
+    if (kind === 'sub')  openSubForm(subEntries.find(x => x.id === id));
+    if (kind === 'ps')   openPsForm (psEntries.find (x => x.id === id));
+  }, 220);
 }
 
 function renderTimesheet() {
@@ -1995,81 +2258,61 @@ function renderTimesheet() {
   const totalOT  = tsEntries.reduce((s,e)=>s+(e.ot||0),0);
   const total    = totalReg + totalOT;
   const weeks    = tsEntries.length;
-
   document.getElementById('tsTotal').textContent = fmt(total);
   document.getElementById('tsWeeks').textContent = weeks;
   document.getElementById('tsAvg').textContent   = weeks ? fmt(total/weeks) : '0.0';
   document.getElementById('tsOT').textContent    = fmt(totalOT);
 
-  // Filter + sort
   const search = (document.getElementById('tsSearch').value || '').toLowerCase();
   let rows = tsEntries.map(e => ({...e, tot: (e.reg||0)+(e.ot||0)}));
   if (search) rows = rows.filter(e =>
     (e.notes||'').toLowerCase().includes(search) ||
     dispDate(e.date).toLowerCase().includes(search)
   );
-  rows.sort((a,b) => {
-    let x = a[tsState.sort], y = b[tsState.sort];
-    if (typeof x === 'string') { x = x.toLowerCase(); y = y.toLowerCase(); }
-    if (x < y) return tsState.dir === 'asc' ? -1 : 1;
-    if (x > y) return tsState.dir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  rows.sort((a,b) => b.date.localeCompare(a.date));
 
-  // Update sort indicators
-  document.querySelectorAll('#tab-timesheet th.sortable').forEach(th => {
-    th.classList.remove('sort-asc','sort-desc');
-    const f = th.dataset.sort;
-    if (f === tsState.sort) {
-      th.classList.add('sort-' + tsState.dir);
-      th.querySelector('.sort-ind').textContent = tsState.dir === 'asc' ? '▲' : '▼';
-    } else {
-      th.querySelector('.sort-ind').textContent = '';
-    }
-  });
-
-  const tbody = document.getElementById('tsBody');
+  const list = document.getElementById('tsBody');
   const empty = document.getElementById('tsEmpty');
-
   if (!rows.length) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
+    list.innerHTML=''; empty.style.display='block';
     document.getElementById('tsPager').innerHTML = '';
     document.getElementById('tsPageInfo').textContent = '0 entries';
     return;
   }
   empty.style.display = 'none';
 
-  // Pagination
   const pageSize = parseInt(document.getElementById('tsPageSize').value) || 25;
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   if (tsState.page > totalPages) tsState.page = totalPages;
   const startIdx = (tsState.page - 1) * pageSize;
   const pageRows = rows.slice(startIdx, startIdx + pageSize);
 
-  tbody.innerHTML = pageRows.map(e => {
+  list.innerHTML = pageRows.map(e => {
     const tot = (e.reg||0) + (e.ot||0);
-    const statusBadge = e.auto
-      ? '<span class="badge badge-auto">Auto</span>'
-      : tot >= 37 && tot <= 45 ? '<span class="badge badge-green">Normal</span>'
-      : tot < 37              ? '<span class="badge badge-red">Short</span>'
-      :                         '<span class="badge badge-amber">Long</span>';
-    return `<tr>
-      <td><strong>${dispDate(e.date)}</strong></td>
-      <td>${fmt(e.reg||0)}</td>
-      <td>${(e.ot||0)>0?'<span style="color:var(--amber)">+'+fmt(e.ot)+'</span>':'—'}</td>
-      <td><strong>${fmt(tot)}</strong></td>
-      <td style="color:var(--muted);font-size:0.82rem">${escHtml(e.notes)||'—'}</td>
-      <td>${statusBadge}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost" onclick="editTs('${e.id}')">Edit</button>
-        <button class="btn btn-ghost" onclick="deleteTs('${e.id}','${escHtml(dispDate(e.date))}')">×</button>
-      </div></td>
-    </tr>`;
+    const dot = e.auto ? 'background:var(--amber);' :
+                tot >= 37 && tot <= 45 ? 'background:var(--green);' :
+                tot < 37 ? 'background:var(--red);' : 'background:var(--amber);';
+    const lbl = e.auto ? 'Auto' :
+                tot >= 37 && tot <= 45 ? 'Normal' :
+                tot < 37 ? 'Short' : 'Long';
+    const subtitle = (e.notes ? escHtml(e.notes) : '') ||
+                     `Reg ${fmt(e.reg||0)}${(e.ot||0)>0?' • OT '+fmt(e.ot):''}`;
+    return `<div class="entry" onclick="showTsDetail('${e.id}')">
+      <div class="entry-leading"><span class="status-dot" style="${dot}"></span></div>
+      <div class="entry-body">
+        <div class="entry-title">${dispDateShort(e.date)} <span style="color:var(--muted);font-weight:400;font-size:11px;">· ${lbl}</span></div>
+        <div class="entry-sub">${subtitle}</div>
+      </div>
+      <div class="entry-trailing">
+        <div class="entry-amount">${fmt(tot)}<span style="font-size:11px;color:var(--muted);font-weight:400;font-family:inherit;"> hrs</span></div>
+        ${e.auto ? '<div class="entry-meta"><span class="badge badge-auto">Auto</span></div>' : ''}
+      </div>
+      <div class="entry-chevron">›</div>
+    </div>`;
   }).join('');
 
   document.getElementById('tsPageInfo').textContent =
-    `Showing ${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
+    `${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
   renderPager('tsPager', tsState.page, totalPages, p => { tsState.page = p; renderTimesheet(); });
 }
 
@@ -2077,7 +2320,6 @@ function renderPager(elId, current, total, onClick) {
   const el = document.getElementById(elId);
   if (total <= 1) { el.innerHTML = ''; return; }
   let html = `<button class="pager-btn" ${current===1?'disabled':''} onclick="(${onClick.toString()})(${current-1})">‹</button>`;
-  // Show up to 5 page numbers around current
   const start = Math.max(1, current - 2);
   const end   = Math.min(total, start + 4);
   for (let p = start; p <= end; p++) {
@@ -2085,18 +2327,6 @@ function renderPager(elId, current, total, onClick) {
   }
   html += `<button class="pager-btn" ${current===total?'disabled':''} onclick="(${onClick.toString()})(${current+1})">›</button>`;
   el.innerHTML = html;
-}
-
-function applyTsFilter() {
-  const from = document.getElementById('tsFrom').value;
-  const to   = document.getElementById('tsTo').value;
-  if (!from||!to) { showToast('Select both From and To dates'); return; }
-  tsFilterFrom = from; tsFilterTo = to;
-  const f = tsEntries.filter(e=>e.date>=from&&e.date<=to);
-  const total = f.reduce((s,e)=>s+(e.reg||0)+(e.ot||0),0);
-  document.getElementById('tsFilteredHrs').textContent = fmt(total);
-  document.getElementById('tsFilteredWks').textContent = f.length;
-  showToast('Filter applied — '+f.length+' week(s)');
 }
 
 function exportTsCsv() {
@@ -2107,7 +2337,6 @@ function exportTsCsv() {
   });
   downloadCsv('timesheet.csv', rows);
 }
-
 function downloadCsv(filename, rows) {
   const csv = rows.map(r => r.map(v => {
     const s = String(v ?? '');
@@ -2123,87 +2352,111 @@ function downloadCsv(filename, rows) {
   showToast('Exported ' + filename);
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  EXPENSES
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   EXPENSES — UI
+   ════════════════════════════════════════════════════════════════════════ */
+function openExpForm(entry) {
+  cancelExpEdit();
+  if (entry) {
+    document.getElementById('expFormTitle').textContent = 'Edit Expense';
+    document.getElementById('expDate').value = entry.date;
+    document.getElementById('expCat').value  = entry.cat || '';
+    document.getElementById('expAmt').value  = entry.amt;
+    document.getElementById('expDesc').value = entry.desc || '';
+    document.getElementById('expRef').value  = entry.ref || '';
+    document.getElementById('expEditId').value = entry.id;
+    document.getElementById('expDeleteBtn').style.display = 'block';
+  } else {
+    document.getElementById('expFormTitle').textContent = 'Add Expense';
+    document.getElementById('expDate').value = todayStr();
+    document.getElementById('expDeleteBtn').style.display = 'none';
+  }
+  openSheet('expForm');
+}
+
+function cancelExpEdit() {
+  document.getElementById('expDate').value = todayStr();
+  document.getElementById('expCat').value  = '';
+  document.getElementById('expAmt').value  = '';
+  document.getElementById('expDesc').value = '';
+  document.getElementById('expRef').value  = '';
+  document.getElementById('expEditId').value = '';
+  document.getElementById('expAmtErr').style.display = 'none';
+}
+
 async function saveExpense() {
   const dateVal = document.getElementById('expDate').value;
-  const cat     = document.getElementById('expCat').value;
+  const catName = document.getElementById('expCat').value.trim();
   const amt     = parseFloat(document.getElementById('expAmt').value);
   const desc    = document.getElementById('expDesc').value.trim();
   const ref     = document.getElementById('expRef').value.trim();
   const editId  = document.getElementById('expEditId').value;
 
   if (!dateVal) { showToast('Please select a date'); return; }
+  if (!catName) { showToast('Please pick a category'); return; }
   if (!amt || amt <= 0) { document.getElementById('expAmtErr').style.display='block'; return; }
   document.getElementById('expAmtErr').style.display = 'none';
 
-  const btn = document.getElementById('expSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  // Auto-create category if it doesn't exist (user typed a brand-new name)
+  let cat = catName;
+  if (!categories.some(c => c.name.toLowerCase() === catName.toLowerCase())) {
+    setSyncWait('Adding category…');
+    try {
+      const docRef = await catCol().add({ name: catName, icon: '📦', color: '#8b4513' });
+      categories.push({ id: docRef.id, name: catName, icon: '📦', color: '#8b4513' });
+    } catch(e) { console.error(e); showToast('Could not create category'); return; }
+  } else {
+    // Use the canonical capitalisation from the existing category
+    const existing = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+    cat = existing.name;
+  }
+
   setSyncWait('Saving…');
   try {
     if (editId) {
-      // Preserve existing fields like subId so we don't lose link to subscription
-      const existing = expEntries.find(e => e.id === editId) || {};
-      await expCol().doc(editId).set({
-        ...existing,
-        date: dateVal, cat, amt, desc, ref
-      });
+      const old = expEntries.find(e => e.id === editId) || {};
+      await expCol().doc(editId).set({ ...old, date: dateVal, cat, amt, desc, ref });
     } else {
       await expCol().add({ date: dateVal, cat, amt, desc, ref });
     }
-    cancelExpEdit();
-    showToast(editId ? 'Expense updated ✓' : 'Expense added ✓');
+    closeSheet('expForm');
+    showToast(editId ? 'Expense updated' : 'Expense added');
     await loadAll();
-  } catch(e) {
-    setSyncErr('Save failed'); showToast('Save failed.'); console.error(e);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Add Expense →';
-  }
+  } catch(e) { setSyncErr('Save failed'); showToast('Save failed'); console.error(e); }
 }
 
-function editExp(id) {
-  const e = expEntries.find(x => x.id === id); if (!e) return;
-  document.getElementById('expDate').value = e.date;
-  document.getElementById('expCat').value  = e.cat;
-  document.getElementById('expAmt').value  = e.amt;
-  document.getElementById('expDesc').value = e.desc || '';
-  document.getElementById('expRef').value  = e.ref || '';
-  document.getElementById('expEditId').value = id;
-  document.getElementById('expSaveBtn').textContent = 'Update Expense →';
-  document.getElementById('expCancelEditBtn').style.display = 'block';
-  document.getElementById('expDate').scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function cancelExpEdit() {
-  document.getElementById('expDate').value = todayStr();
-  document.getElementById('expAmt').value  = '';
-  document.getElementById('expDesc').value = '';
-  document.getElementById('expRef').value  = '';
-  document.getElementById('expEditId').value = '';
-  document.getElementById('expSaveBtn').textContent = 'Add Expense →';
-  document.getElementById('expCancelEditBtn').style.display = 'none';
-  document.getElementById('expAmtErr').style.display = 'none';
-}
-
-async function deleteExp(id, label) {
-  if (!confirm('Delete expense: ' + label + '?')) return;
+async function deleteCurrentExp() {
+  const id = document.getElementById('expEditId').value;
+  const e = expEntries.find(x => x.id === id);
+  if (!e || !confirm('Delete: ' + (e.desc || e.cat) + '?')) return;
   setSyncWait('Deleting…');
-  try { await expCol().doc(id).delete(); showToast('Removed'); await loadAll(); }
-  catch(e) { setSyncErr('Delete failed'); console.error(e); }
+  try { await expCol().doc(id).delete(); closeSheet('expForm'); showToast('Removed'); await loadAll(); }
+  catch(err) { setSyncErr('Delete failed'); console.error(err); }
 }
 
-function sortExp(field) {
-  if (expState.sort === field) expState.dir = (expState.dir === 'asc' ? 'desc' : 'asc');
-  else { expState.sort = field; expState.dir = 'desc'; }
-  renderExpenses();
+function showExpDetail(id) {
+  const e = expEntries.find(x => x.id === id); if (!e) return;
+  const c = getCategory(e.cat);
+  detailContext = { kind: 'exp', id };
+  document.getElementById('detailTitle').textContent = e.desc || e.cat;
+  const sourceBadge = e.subId
+    ? '<span class="badge badge-sub">From subscription</span>'
+    : '<span class="badge badge-grey">Manual</span>';
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-lbl">Amount</div><div class="detail-val"><strong style="color:var(--brown);font-size:var(--t-title3);">${fmtM(e.amt||0)}</strong></div></div>
+    <div class="detail-row"><div class="detail-lbl">Date</div><div class="detail-val">${dispDateFull(e.date)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Category</div><div class="detail-val"><span class="cat-badge" style="background:${c.color}33;color:${c.color}">${c.icon} ${escHtml(e.cat)}</span></div></div>
+    ${e.desc ? `<div class="detail-row"><div class="detail-lbl">Description</div><div class="detail-val">${escHtml(e.desc)}</div></div>` : ''}
+    ${e.ref ? `<div class="detail-row"><div class="detail-lbl">Reference</div><div class="detail-val">${escHtml(e.ref)}</div></div>` : ''}
+    <div class="detail-row"><div class="detail-lbl">Source</div><div class="detail-val">${sourceBadge}</div></div>
+  `;
+  openSheet('detail');
 }
 
 function renderExpenses() {
-  const totalAll   = expEntries.reduce((s,e)=>s+(e.amt||0),0);
-  const thisMonth  = todayStr().slice(0,7);
+  const totalAll  = expEntries.reduce((s,e)=>s+(e.amt||0),0);
+  const thisMonth = todayStr().slice(0,7);
   const monthTotal = expEntries.filter(e=>e.date.slice(0,7)===thisMonth).reduce((s,e)=>s+(e.amt||0),0);
-
   const catTotals = {};
   expEntries.forEach(e => { catTotals[e.cat] = (catTotals[e.cat]||0) + (e.amt||0); });
   const topCat = Object.keys(catTotals).sort((a,b)=>catTotals[b]-catTotals[a])[0] || '—';
@@ -2213,23 +2466,21 @@ function renderExpenses() {
   document.getElementById('expCount').textContent      = expEntries.length;
   document.getElementById('expTopCat').textContent     = topCat;
 
-  // Category bars
   const barWrap = document.getElementById('catBars');
-  if (!expEntries.length) { barWrap.innerHTML='<div class="empty" style="padding:12px 0;">No data yet</div>'; }
+  if (!expEntries.length) { barWrap.innerHTML='<div class="empty-state" style="padding:8px 0;">No data yet</div>'; }
   else {
     const cats = Object.keys(catTotals).sort((a,b)=>catTotals[b]-catTotals[a]);
     const max  = catTotals[cats[0]] || 1;
     barWrap.innerHTML = cats.map(cat => {
       const c = getCategory(cat);
       return `
-      <div class="cat-bar-wrap">
-        <div class="cat-bar-label"><span>${c.icon} ${escHtml(cat)}</span><span>${fmtM(catTotals[cat])}</span></div>
+      <div class="cat-bar">
+        <div class="cat-bar-row"><span>${c.icon} ${escHtml(cat)}</span><span style="font-weight:600;">${fmtM(catTotals[cat])}</span></div>
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${(catTotals[cat]/max*100).toFixed(1)}%;background:${c.color}"></div></div>
       </div>`;
     }).join('');
   }
 
-  // Table — search + filter + sort + page
   const search = (document.getElementById('expSearch').value || '').toLowerCase();
   const catFilter = document.getElementById('expCatFilter').value;
   let rows = expEntries.slice();
@@ -2239,30 +2490,12 @@ function renderExpenses() {
     (e.ref ||'').toLowerCase().includes(search) ||
     (e.cat ||'').toLowerCase().includes(search)
   );
-  rows.sort((a,b) => {
-    let x = a[expState.sort], y = b[expState.sort];
-    if (typeof x === 'string') { x = x.toLowerCase(); y = y.toLowerCase(); }
-    if (x < y) return expState.dir === 'asc' ? -1 : 1;
-    if (x > y) return expState.dir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  rows.sort((a,b) => b.date.localeCompare(a.date));
 
-  document.querySelectorAll('#tab-expenses th.sortable').forEach(th => {
-    th.classList.remove('sort-asc','sort-desc');
-    const f = th.dataset.sort;
-    if (f === expState.sort) {
-      th.classList.add('sort-' + expState.dir);
-      th.querySelector('.sort-ind').textContent = expState.dir === 'asc' ? '▲' : '▼';
-    } else {
-      th.querySelector('.sort-ind').textContent = '';
-    }
-  });
-
-  const tbody = document.getElementById('expBody');
+  const list = document.getElementById('expBody');
   const empty = document.getElementById('expEmpty');
   if (!rows.length) {
-    tbody.innerHTML='';
-    empty.style.display='block';
+    list.innerHTML=''; empty.style.display='block';
     document.getElementById('expPager').innerHTML = '';
     document.getElementById('expPageInfo').textContent = '0 entries';
     return;
@@ -2275,45 +2508,27 @@ function renderExpenses() {
   const startIdx = (expState.page - 1) * pageSize;
   const pageRows = rows.slice(startIdx, startIdx + pageSize);
 
-  tbody.innerHTML = pageRows.map(e => {
+  list.innerHTML = pageRows.map(e => {
     const c = getCategory(e.cat);
-    const catBadge = `<span class="cat-badge" style="background:${c.color}33;color:${c.color};">${c.icon} ${escHtml(e.cat)}</span>`;
-    const sourceBadge = e.subId
-      ? '<span class="badge badge-sub">SUB</span>'
-      : '<span class="badge badge-grey">Manual</span>';
-    return `<tr>
-      <td><strong>${dispDateFull(e.date)}</strong></td>
-      <td>${catBadge}</td>
-      <td style="max-width:200px;">${escHtml(e.desc)||'—'}</td>
-      <td style="color:var(--muted);font-size:0.8rem">${escHtml(e.ref)||'—'}</td>
-      <td><strong style="color:var(--brown)">${fmtM(e.amt||0)}</strong></td>
-      <td>${sourceBadge}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost" onclick="editExp('${e.id}')">Edit</button>
-        <button class="btn btn-ghost" onclick="deleteExp('${e.id}','${escHtml(e.desc||e.cat)}')">×</button>
-      </div></td>
-    </tr>`;
+    const subtitle = e.desc
+      ? `${escHtml(e.desc)}${e.ref ? ' · ' + escHtml(e.ref) : ''}`
+      : `<span class="cat-badge" style="background:${c.color}33;color:${c.color};font-size:10px;padding:1px 6px;">${c.icon} ${escHtml(e.cat)}</span>`;
+    return `<div class="entry" onclick="showExpDetail('${e.id}')">
+      <div class="entry-leading" style="background:${c.color}22;color:${c.color}">${c.icon}</div>
+      <div class="entry-body">
+        <div class="entry-title">${escHtml(e.desc) || escHtml(e.cat)} ${e.subId ? '<span class="badge badge-sub" style="font-size:9px;padding:1px 5px;">SUB</span>' : ''}</div>
+        <div class="entry-sub">${dispDateShort(e.date)} · ${escHtml(e.cat)}${e.ref ? ' · ' + escHtml(e.ref) : ''}</div>
+      </div>
+      <div class="entry-trailing">
+        <div class="entry-amount" style="color:var(--brown);">${fmtM(e.amt||0)}</div>
+      </div>
+      <div class="entry-chevron">›</div>
+    </div>`;
   }).join('');
 
   document.getElementById('expPageInfo').textContent =
-    `Showing ${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
+    `${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
   renderPager('expPager', expState.page, totalPages, p => { expState.page = p; renderExpenses(); });
-}
-
-function applyExpFilter() {
-  const m = document.getElementById('expMonth').value;
-  if (!m) { showToast('Please select a month'); return; }
-  const filtered = expEntries.filter(e=>e.date.slice(0,7)===m);
-  const total    = filtered.reduce((s,e)=>s+(e.amt||0),0);
-  document.getElementById('expFilterTotal').textContent = fmtM(total);
-  document.getElementById('expFilterCount').textContent = filtered.length;
-  showToast('Month filter applied — '+filtered.length+' expense(s)');
-}
-
-function clearExpFilter() {
-  document.getElementById('expFilterTotal').textContent = '—';
-  document.getElementById('expFilterCount').textContent = '—';
-  document.getElementById('expMonth').value = todayStr().slice(0,7);
 }
 
 function exportExpCsv() {
@@ -2325,12 +2540,45 @@ function exportExpCsv() {
   downloadCsv('expenses.csv', rows);
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  SUBSCRIPTIONS — CRUD + auto-generation
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   SUBSCRIPTIONS — UI + auto-generation
+   ════════════════════════════════════════════════════════════════════════ */
+function openSubForm(entry) {
+  cancelSubEdit();
+  if (entry) {
+    document.getElementById('subFormTitle').textContent = 'Edit Subscription';
+    document.getElementById('subName').value  = entry.name || '';
+    document.getElementById('subCat').value   = entry.cat || '';
+    document.getElementById('subAmt').value   = entry.amt;
+    document.getElementById('subDay').value   = entry.day;
+    document.getElementById('subStart').value = entry.start || '';
+    document.getElementById('subEnd').value   = entry.end || '';
+    document.getElementById('subNotes').value = entry.notes || '';
+    document.getElementById('subEditId').value = entry.id;
+    document.getElementById('subDeleteBtn').style.display = 'block';
+    const tBtn = document.getElementById('subToggleBtn');
+    tBtn.style.display = 'block';
+    tBtn.textContent = entry.active ? 'Stop' : 'Resume';
+    tBtn.className = entry.active ? 'btn btn-amber btn-full' : 'btn btn-green btn-full';
+  } else {
+    document.getElementById('subFormTitle').textContent = 'Add Subscription';
+    document.getElementById('subStart').value = todayStr();
+    document.getElementById('subDay').value   = new Date().getDate();
+    document.getElementById('subDeleteBtn').style.display = 'none';
+    document.getElementById('subToggleBtn').style.display = 'none';
+  }
+  openSheet('subForm');
+}
+
+function cancelSubEdit() {
+  ['subName','subAmt','subStart','subEnd','subNotes','subCat'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('subEditId').value = '';
+  document.getElementById('subErr').style.display = 'none';
+}
+
 async function saveSubscription() {
   const name   = document.getElementById('subName').value.trim();
-  const cat    = document.getElementById('subCat').value;
+  const catName = document.getElementById('subCat').value.trim();
   const amt    = parseFloat(document.getElementById('subAmt').value);
   const day    = parseInt(document.getElementById('subDay').value);
   const start  = document.getElementById('subStart').value;
@@ -2338,175 +2586,145 @@ async function saveSubscription() {
   const notes  = document.getElementById('subNotes').value.trim();
   const editId = document.getElementById('subEditId').value;
 
-  if (!name || !cat || !amt || amt <= 0 || !day || day < 1 || day > 31 || !start) {
+  if (!name || !catName || !amt || amt <= 0 || !day || day < 1 || day > 31 || !start) {
     document.getElementById('subErr').style.display = 'block'; return;
   }
   document.getElementById('subErr').style.display = 'none';
 
-  const btn = document.getElementById('subSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  let cat = catName;
+  if (!categories.some(c => c.name.toLowerCase() === catName.toLowerCase())) {
+    setSyncWait('Adding category…');
+    try {
+      const docRef = await catCol().add({ name: catName, icon: '📦', color: '#8b4513' });
+      categories.push({ id: docRef.id, name: catName, icon: '📦', color: '#8b4513' });
+    } catch(e) { console.error(e); showToast('Could not create category'); return; }
+  } else {
+    cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase()).name;
+  }
+
   setSyncWait('Saving…');
   try {
-    const payload = { name, cat, amt, day, start, end: end || null, notes, active: true };
+    const old = editId ? subEntries.find(s => s.id === editId) : null;
+    const payload = {
+      name, cat, amt, day, start,
+      end: end || null,
+      notes,
+      active: old ? old.active : true
+    };
     if (editId) await subCol().doc(editId).set(payload);
     else        await subCol().add(payload);
-    cancelSubEdit();
-    showToast(editId ? 'Subscription updated ✓' : 'Subscription added ✓');
+    closeSheet('subForm');
+    showToast(editId ? 'Subscription updated' : 'Subscription added');
     await loadAll();
-  } catch(e) {
-    setSyncErr('Save failed'); showToast('Save failed.'); console.error(e);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save Subscription →';
-  }
+  } catch(e) { setSyncErr('Save failed'); console.error(e); showToast('Save failed'); }
 }
 
-function editSub(id) {
+async function deleteCurrentSub() {
+  const id = document.getElementById('subEditId').value;
   const s = subEntries.find(x => x.id === id); if (!s) return;
-  document.getElementById('subName').value  = s.name || '';
-  document.getElementById('subCat').value   = s.cat || '';
-  document.getElementById('subAmt').value   = s.amt;
-  document.getElementById('subDay').value   = s.day;
-  document.getElementById('subStart').value = s.start || '';
-  document.getElementById('subEnd').value   = s.end || '';
-  document.getElementById('subNotes').value = s.notes || '';
-  document.getElementById('subEditId').value = id;
-  document.getElementById('subSaveBtn').textContent = 'Update Subscription →';
-  document.getElementById('subCancelEditBtn').style.display = 'block';
-  document.getElementById('subName').scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function cancelSubEdit() {
-  document.getElementById('subName').value  = '';
-  document.getElementById('subAmt').value   = '';
-  document.getElementById('subDay').value   = new Date().getDate();
-  document.getElementById('subStart').value = todayStr();
-  document.getElementById('subEnd').value   = '';
-  document.getElementById('subNotes').value = '';
-  document.getElementById('subEditId').value = '';
-  document.getElementById('subSaveBtn').textContent = 'Save Subscription →';
-  document.getElementById('subCancelEditBtn').style.display = 'none';
-  document.getElementById('subErr').style.display = 'none';
-}
-
-async function deleteSub(id, name) {
-  const linkedCount = expEntries.filter(e => e.subId === id).length;
-  const msg = linkedCount > 0
-    ? `Delete subscription "${name}"?\n\n${linkedCount} past expense entry(ies) generated by this subscription will remain in your Expenses tab. Stop generating new entries instead?`
-    : `Delete subscription "${name}"?`;
+  const linked = expEntries.filter(e => e.subId === id).length;
+  const msg = linked > 0
+    ? `Delete "${s.name}"?\n\n${linked} past expense(s) generated by this subscription will remain in your Expenses tab.`
+    : `Delete "${s.name}"?`;
   if (!confirm(msg)) return;
   setSyncWait('Deleting…');
-  try { await subCol().doc(id).delete(); showToast('Subscription deleted'); await loadAll(); }
+  try { await subCol().doc(id).delete(); closeSheet('subForm'); showToast('Subscription deleted'); await loadAll(); }
   catch(e) { setSyncErr('Delete failed'); console.error(e); }
 }
 
-async function toggleSub(id) {
+async function toggleCurrentSub() {
+  const id = document.getElementById('subEditId').value;
   const s = subEntries.find(x => x.id === id); if (!s) return;
-  const newActive = !s.active;
   setSyncWait('Updating…');
   try {
-    await subCol().doc(id).update({ active: newActive });
-    showToast(newActive ? 'Subscription resumed' : 'Subscription stopped');
+    await subCol().doc(id).update({ active: !s.active });
+    showToast(!s.active ? 'Resumed' : 'Stopped');
+    closeSheet('subForm');
     await loadAll();
   } catch(e) { setSyncErr('Update failed'); console.error(e); }
+}
+
+function showSubDetail(id) {
+  const s = subEntries.find(x => x.id === id); if (!s) return;
+  const c = getCategory(s.cat);
+  detailContext = { kind: 'sub', id };
+  document.getElementById('detailTitle').textContent = s.name;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-lbl">Amount</div><div class="detail-val"><strong style="color:var(--brown);font-size:var(--t-title3);">${fmtM(s.amt||0)}</strong> / month</div></div>
+    <div class="detail-row"><div class="detail-lbl">Day of month</div><div class="detail-val">${s.day}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Category</div><div class="detail-val"><span class="cat-badge" style="background:${c.color}33;color:${c.color}">${c.icon} ${escHtml(s.cat)}</span></div></div>
+    <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val">${s.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-grey">Stopped</span>'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Started</div><div class="detail-val">${dispDate(s.start)}</div></div>
+    ${s.end ? `<div class="detail-row"><div class="detail-lbl">Ends</div><div class="detail-val">${dispDate(s.end)}</div></div>` : ''}
+    ${s.notes ? `<div class="detail-row"><div class="detail-lbl">Notes</div><div class="detail-val">${escHtml(s.notes)}</div></div>` : ''}
+    <div class="detail-row"><div class="detail-lbl">Yearly equiv.</div><div class="detail-val">${fmtM((s.amt||0)*12)}</div></div>
+  `;
+  openSheet('detail');
 }
 
 function renderSubscriptions() {
   const active   = subEntries.filter(s => s.active);
   const inactive = subEntries.filter(s => !s.active);
   const monthly  = active.reduce((s,x)=>s+(x.amt||0),0);
-
   document.getElementById('subActiveCount').textContent   = active.length;
   document.getElementById('subInactiveCount').textContent = inactive.length;
   document.getElementById('subMonthlyTotal').textContent  = fmtM(monthly);
   document.getElementById('subYearlyTotal').textContent   = fmtM(monthly * 12);
 
-  const tbody = document.getElementById('subBody');
+  const list = document.getElementById('subBody');
   const empty = document.getElementById('subEmpty');
-  if (!subEntries.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  if (!subEntries.length) { list.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display = 'none';
 
   const sorted = [...subEntries].sort((a,b) => Number(b.active) - Number(a.active) || (a.name||'').localeCompare(b.name||''));
-
-  tbody.innerHTML = sorted.map(s => {
+  list.innerHTML = sorted.map(s => {
     const c = getCategory(s.cat);
-    const catBadge = `<span class="cat-badge" style="background:${c.color}33;color:${c.color};">${c.icon} ${escHtml(s.cat)}</span>`;
-    const status = s.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-grey">Stopped</span>';
-    return `<tr>
-      <td><strong>${escHtml(s.name)}</strong>${s.notes?'<br><span style="color:var(--muted);font-size:0.75rem">'+escHtml(s.notes)+'</span>':''}</td>
-      <td>${catBadge}</td>
-      <td><strong style="color:var(--brown)">${fmtM(s.amt||0)}</strong></td>
-      <td>${s.day}</td>
-      <td style="font-size:0.82rem;">${dispDate(s.start)}</td>
-      <td style="font-size:0.82rem;">${s.end?dispDate(s.end):'—'}</td>
-      <td>${status}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost" onclick="editSub('${s.id}')">Edit</button>
-        <button class="btn btn-ghost" onclick="toggleSub('${s.id}')">${s.active?'Stop':'Resume'}</button>
-        <button class="btn btn-ghost" onclick="deleteSub('${s.id}','${escHtml(s.name)}')">×</button>
-      </div></td>
-    </tr>`;
+    return `<div class="entry" onclick="showSubDetail('${s.id}')">
+      <div class="entry-leading" style="background:${c.color}22;color:${c.color}">${c.icon}</div>
+      <div class="entry-body">
+        <div class="entry-title">${escHtml(s.name)} ${s.active ? '<span class="badge badge-green" style="font-size:9px;padding:1px 6px;">Active</span>' : '<span class="badge badge-grey" style="font-size:9px;padding:1px 6px;">Stopped</span>'}</div>
+        <div class="entry-sub">${escHtml(s.cat)} · Day ${s.day} · ${s.notes ? escHtml(s.notes) : 'every month'}</div>
+      </div>
+      <div class="entry-trailing">
+        <div class="entry-amount" style="color:var(--brown);">${fmtM(s.amt||0)}</div>
+        <div class="entry-meta">/mo</div>
+      </div>
+      <div class="entry-chevron">›</div>
+    </div>`;
   }).join('');
 }
 
-// Auto-generate expense entries for active subscriptions
 async function processSubscriptions() {
   if (!subEntries.length) return;
   const today = new Date(); today.setHours(0,0,0,0);
   const todayY = ymd(today);
   const batch = db.batch();
   let created = 0;
-
   for (const s of subEntries) {
-    if (!s.active) continue;
-    if (!s.start) continue;
+    if (!s.active || !s.start) continue;
     if (s.end && s.end < todayY) continue;
-
-    // Generate dates from max(start, 12 months ago) up to today
     const startBound = new Date(s.start + 'T00:00:00');
     const earliest = new Date(today); earliest.setMonth(earliest.getMonth() - 12);
     const cursor = startBound > earliest ? new Date(startBound) : new Date(earliest);
-    cursor.setDate(1); // Walk by month from the 1st
-
+    cursor.setDate(1);
     const end = s.end ? new Date(s.end+'T00:00:00') : today;
     const upper = end < today ? end : today;
-
-    const existingDates = new Set(
-      expEntries.filter(e => e.subId === s.id).map(e => e.date)
-    );
-
+    const existingDates = new Set(expEntries.filter(e => e.subId === s.id).map(e => e.date));
     while (cursor <= upper) {
-      const yy = cursor.getFullYear();
-      const mm = cursor.getMonth();
-      // Last day of this month
+      const yy = cursor.getFullYear(), mm = cursor.getMonth();
       const lastDay = new Date(yy, mm + 1, 0).getDate();
       const targetDay = Math.min(s.day, lastDay);
-      const occ = new Date(yy, mm, targetDay);
-      occ.setHours(0,0,0,0);
+      const occ = new Date(yy, mm, targetDay); occ.setHours(0,0,0,0);
       const occStr = ymd(occ);
-
-      // Must be on/after start, on/before end, on/before today
-      const inRange =
-        occStr >= s.start &&
-        (!s.end || occStr <= s.end) &&
-        occStr <= todayY;
-
+      const inRange = occStr >= s.start && (!s.end || occStr <= s.end) && occStr <= todayY;
       if (inRange && !existingDates.has(occStr)) {
-        const ref = expCol().doc();
-        batch.set(ref, {
-          date: occStr,
-          cat: s.cat,
-          amt: s.amt,
-          desc: s.name,
-          ref: '',
-          subId: s.id
-        });
+        batch.set(expCol().doc(), { date: occStr, cat: s.cat, amt: s.amt, desc: s.name, ref: '', subId: s.id });
         existingDates.add(occStr);
         created++;
       }
       cursor.setMonth(cursor.getMonth() + 1);
     }
   }
-
   if (created > 0) {
     await batch.commit();
     autoCreatedAny = true;
@@ -2514,9 +2732,35 @@ async function processSubscriptions() {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  PAYSLIPS — CRUD + diff calculations
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   PAYSLIPS — UI + diff calc (week-aware)
+   ════════════════════════════════════════════════════════════════════════ */
+function openPsForm(entry) {
+  cancelPsEdit();
+  if (entry) {
+    document.getElementById('psFormTitle').textContent = 'Edit Payslip';
+    document.getElementById('psFrom').value  = entry.from;
+    document.getElementById('psTo').value    = entry.to;
+    document.getElementById('psHours').value = entry.hours;
+    document.getElementById('psRate').value  = entry.rate;
+    document.getElementById('psAmt').value   = entry.amt;
+    document.getElementById('psRef').value   = entry.ref || '';
+    document.getElementById('psNotes').value = entry.notes || '';
+    document.getElementById('psEditId').value = entry.id;
+    document.getElementById('psDeleteBtn').style.display = 'block';
+  } else {
+    document.getElementById('psFormTitle').textContent = 'Add Payslip';
+    document.getElementById('psDeleteBtn').style.display = 'none';
+  }
+  openSheet('psForm');
+}
+
+function cancelPsEdit() {
+  ['psFrom','psTo','psHours','psRate','psAmt','psRef','psNotes'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('psEditId').value = '';
+  document.getElementById('psErr').style.display = 'none';
+}
+
 async function savePayslip() {
   const from   = document.getElementById('psFrom').value;
   const to     = document.getElementById('psTo').value;
@@ -2526,118 +2770,77 @@ async function savePayslip() {
   const ref    = document.getElementById('psRef').value.trim();
   const notes  = document.getElementById('psNotes').value.trim();
   const editId = document.getElementById('psEditId').value;
-
-  if (!from || !to || !hours || hours < 0 || !rate || rate <= 0 || !amt || amt < 0) {
+  if (!from || !to || isNaN(hours) || hours < 0 || !rate || rate <= 0 || isNaN(amt) || amt < 0) {
     document.getElementById('psErr').style.display = 'block'; return;
   }
   if (from > to) {
-    document.getElementById('psErr').textContent = '⚠ "From" date must be on or before "To" date';
+    document.getElementById('psErr').textContent = '"From" must be on or before "To"';
     document.getElementById('psErr').style.display = 'block'; return;
   }
   document.getElementById('psErr').style.display = 'none';
-
-  const btn = document.getElementById('psSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
   setSyncWait('Saving…');
   try {
     const payload = { from, to, hours, rate, amt, ref, notes };
     if (editId) await psCol().doc(editId).set(payload);
     else        await psCol().add(payload);
-    cancelPsEdit();
-    showToast(editId ? 'Payslip updated ✓' : 'Payslip added ✓');
+    closeSheet('psForm');
+    showToast(editId ? 'Payslip updated' : 'Payslip added');
     await loadAll();
-  } catch(e) {
-    setSyncErr('Save failed'); showToast('Save failed.'); console.error(e);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save Payslip →';
-  }
+  } catch(e) { setSyncErr('Save failed'); console.error(e); showToast('Save failed'); }
 }
 
-function editPs(id) {
-  const p = psEntries.find(x => x.id === id); if (!p) return;
-  document.getElementById('psFrom').value  = p.from;
-  document.getElementById('psTo').value    = p.to;
-  document.getElementById('psHours').value = p.hours;
-  document.getElementById('psRate').value  = p.rate;
-  document.getElementById('psAmt').value   = p.amt;
-  document.getElementById('psRef').value   = p.ref || '';
-  document.getElementById('psNotes').value = p.notes || '';
-  document.getElementById('psEditId').value = id;
-  document.getElementById('psSaveBtn').textContent = 'Update Payslip →';
-  document.getElementById('psCancelEditBtn').style.display = 'block';
-  document.getElementById('psFrom').scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function cancelPsEdit() {
-  ['psFrom','psTo','psHours','psRate','psAmt','psRef','psNotes'].forEach(i => document.getElementById(i).value = '');
-  document.getElementById('psEditId').value = '';
-  document.getElementById('psSaveBtn').textContent = 'Save Payslip →';
-  document.getElementById('psCancelEditBtn').style.display = 'none';
-  document.getElementById('psErr').textContent = '⚠ Please fill From, To, Hours, Rate, and Amount';
-  document.getElementById('psErr').style.display = 'none';
-}
-
-async function deletePs(id, label) {
-  if (!confirm('Delete payslip: ' + label + '?')) return;
+async function deleteCurrentPs() {
+  const id = document.getElementById('psEditId').value;
+  const p = psEntries.find(x => x.id === id);
+  if (!p || !confirm('Delete payslip ' + dispDate(p.from) + ' – ' + dispDate(p.to) + '?')) return;
   setSyncWait('Deleting…');
-  try { await psCol().doc(id).delete(); showToast('Removed'); await loadAll(); }
+  try { await psCol().doc(id).delete(); closeSheet('psForm'); showToast('Removed'); await loadAll(); }
   catch(e) { setSyncErr('Delete failed'); console.error(e); }
 }
 
-function sortPs(field) {
-  if (psState.sort === field) psState.dir = (psState.dir === 'asc' ? 'desc' : 'asc');
-  else { psState.sort = field; psState.dir = 'desc'; }
-  renderPayslips();
-}
+function showPsDetail(id) {
+  const p = psEntries.find(x => x.id === id); if (!p) return;
+  const h = tsHoursInRange(p.from, p.to);
+  const exp = h.reg * (p.rate||0) + h.ot * ((p.rate||0) * 1.5);
+  const diff = (p.amt||0) - exp;
+  const diffStr = (diff >= 0 ? '+' : '−') + fmtM(Math.abs(diff));
+  let pill;
+  if (Math.abs(diff) < 1)  pill = `<span class="compare-pill cm-match">✓ Matches expected</span>`;
+  else if (diff > 0)        pill = `<span class="compare-pill cm-over">Paid ${fmtM(Math.abs(diff))} more</span>`;
+  else                       pill = `<span class="compare-pill cm-under">Paid ${fmtM(Math.abs(diff))} less</span>`;
 
-// Returns total reg + ot hours from timesheet within an inclusive date range
-function tsHoursInRange(from, to) {
-  let reg = 0, ot = 0;
-  tsEntries.forEach(e => {
-    if (e.date >= from && e.date <= to) {
-      reg += (e.reg || 0);
-      ot  += (e.ot  || 0);
-    }
-  });
-  return { reg, ot, total: reg + ot };
+  detailContext = { kind: 'ps', id };
+  document.getElementById('detailTitle').textContent = `${dispDateShort(p.from)} – ${dispDateShort(p.to)}`;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-lbl">Period</div><div class="detail-val">${dispDate(p.from)} – ${dispDate(p.to)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Hours (slip)</div><div class="detail-val">${fmt(p.hours||0)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Hours (timesheet)</div><div class="detail-val">${fmt(h.total)} <span style="font-size:11px;color:var(--muted);">(reg ${fmt(h.reg)}, ot ${fmt(h.ot)})</span></div></div>
+    <div class="detail-row"><div class="detail-lbl">Rate</div><div class="detail-val">${fmtM(p.rate||0)} / hr</div></div>
+    <div class="detail-row"><div class="detail-lbl">Paid</div><div class="detail-val"><strong style="color:var(--brown)">${fmtM(p.amt||0)}</strong></div></div>
+    <div class="detail-row"><div class="detail-lbl">Expected</div><div class="detail-val">${fmtM(exp)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Difference</div><div class="detail-val"><strong style="color:${diff>=0?'var(--green)':'var(--red)'};">${diffStr}</strong><br>${pill}</div></div>
+    ${p.ref ? `<div class="detail-row"><div class="detail-lbl">Reference</div><div class="detail-val">${escHtml(p.ref)}</div></div>` : ''}
+    ${p.notes ? `<div class="detail-row"><div class="detail-lbl">Notes</div><div class="detail-val">${escHtml(p.notes)}</div></div>` : ''}
+  `;
+  openSheet('detail');
 }
 
 function renderPayslips() {
   const search = (document.getElementById('psSearch').value || '').toLowerCase();
   let rows = psEntries.slice();
   if (search) rows = rows.filter(p =>
-    (p.ref  ||'').toLowerCase().includes(search) ||
+    (p.ref ||'').toLowerCase().includes(search) ||
     (p.notes||'').toLowerCase().includes(search)
   );
-  rows.sort((a,b) => {
-    let x = a[psState.sort], y = b[psState.sort];
-    if (typeof x === 'string') { x = x.toLowerCase(); y = y.toLowerCase(); }
-    if (x < y) return psState.dir === 'asc' ? -1 : 1;
-    if (x > y) return psState.dir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  rows.sort((a,b) => b.from.localeCompare(a.from));
 
-  document.querySelectorAll('#tab-payslips th.sortable').forEach(th => {
-    th.classList.remove('sort-asc','sort-desc');
-    const f = th.dataset.sort;
-    if (f === psState.sort) {
-      th.classList.add('sort-' + psState.dir);
-      th.querySelector('.sort-ind').textContent = psState.dir === 'asc' ? '▲' : '▼';
-    } else {
-      th.querySelector('.sort-ind').textContent = '';
-    }
-  });
-
-  // Totals (computed on full set, not filtered/paged)
   let paidTotal = 0, expTotal = 0;
   psEntries.forEach(p => {
     paidTotal += (p.amt || 0);
     const h = tsHoursInRange(p.from, p.to);
-    const exp = h.reg * (p.rate||0) + h.ot * ((p.rate||0) * 1.5);
-    expTotal += exp;
+    expTotal += h.reg * (p.rate||0) + h.ot * ((p.rate||0) * 1.5);
   });
   const diffTotal = paidTotal - expTotal;
-
   document.getElementById('psCount').textContent      = psEntries.length;
   document.getElementById('psPaidTotal').textContent  = fmtM(paidTotal);
   document.getElementById('psExpTotal').textContent   = fmtM(expTotal);
@@ -2645,11 +2848,10 @@ function renderPayslips() {
   dt.textContent = (diffTotal >= 0 ? '+' : '−') + fmtM(Math.abs(diffTotal));
   dt.style.color = diffTotal >= 0 ? 'var(--green)' : 'var(--red)';
 
-  const tbody = document.getElementById('psBody');
+  const list = document.getElementById('psBody');
   const empty = document.getElementById('psEmpty');
   if (!rows.length) {
-    tbody.innerHTML='';
-    empty.style.display='block';
+    list.innerHTML=''; empty.style.display='block';
     document.getElementById('psPager').innerHTML = '';
     document.getElementById('psPageInfo').textContent = '0 entries';
     return;
@@ -2662,33 +2864,28 @@ function renderPayslips() {
   const startIdx = (psState.page - 1) * pageSize;
   const pageRows = rows.slice(startIdx, startIdx + pageSize);
 
-  tbody.innerHTML = pageRows.map(p => {
+  list.innerHTML = pageRows.map(p => {
     const h = tsHoursInRange(p.from, p.to);
     const exp = h.reg * (p.rate||0) + h.ot * ((p.rate||0) * 1.5);
     const diff = (p.amt||0) - exp;
     const diffStr = (diff >= 0 ? '+' : '−') + fmtM(Math.abs(diff));
-    let diffBadge;
-    if (Math.abs(diff) < 1)      diffBadge = `<span class="badge badge-green">${diffStr}</span>`;
-    else if (diff > 0)           diffBadge = `<span class="badge badge-amber">${diffStr}</span>`;
-    else                          diffBadge = `<span class="badge badge-red">${diffStr}</span>`;
-    return `<tr>
-      <td><strong>${dispDate(p.from)}</strong></td>
-      <td>${dispDate(p.to)}</td>
-      <td>${fmt(p.hours||0)}<br><span style="font-size:0.7rem;color:var(--muted)">TS: ${fmt(h.total)}</span></td>
-      <td>${fmtM(p.rate||0)}</td>
-      <td><strong style="color:var(--brown)">${fmtM(p.amt||0)}</strong></td>
-      <td style="color:var(--muted)">${fmtM(exp)}</td>
-      <td>${diffBadge}</td>
-      <td style="font-size:0.78rem;color:var(--muted)">${escHtml(p.ref)||'—'}${p.notes?'<br>'+escHtml(p.notes):''}</td>
-      <td><div class="row-actions">
-        <button class="btn btn-ghost" onclick="editPs('${p.id}')">Edit</button>
-        <button class="btn btn-ghost" onclick="deletePs('${p.id}','${escHtml(dispDate(p.from)+'–'+dispDate(p.to))}')">×</button>
-      </div></td>
-    </tr>`;
+    const cls = Math.abs(diff) < 1 ? 'badge-green' : diff > 0 ? 'badge-amber' : 'badge-red';
+    return `<div class="entry" onclick="showPsDetail('${p.id}')">
+      <div class="entry-leading" style="background:rgba(74,124,64,0.12);color:var(--green)">💵</div>
+      <div class="entry-body">
+        <div class="entry-title">${dispDateShort(p.from)} – ${dispDateShort(p.to)}</div>
+        <div class="entry-sub">${fmt(p.hours||0)} hrs · ${fmtM(p.rate||0)}/hr ${p.ref ? '· ' + escHtml(p.ref) : ''}</div>
+      </div>
+      <div class="entry-trailing">
+        <div class="entry-amount" style="color:var(--brown);">${fmtM(p.amt||0)}</div>
+        <span class="badge ${cls}" style="font-size:10px;">${diffStr}</span>
+      </div>
+      <div class="entry-chevron">›</div>
+    </div>`;
   }).join('');
 
   document.getElementById('psPageInfo').textContent =
-    `Showing ${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
+    `${startIdx+1}–${Math.min(startIdx+pageSize, rows.length)} of ${rows.length}`;
   renderPager('psPager', psState.page, totalPages, p => { psState.page = p; renderPayslips(); });
 }
 
@@ -2697,32 +2894,26 @@ function runCmp() {
   const to   = document.getElementById('cmpTo').value;
   const rate = parseFloat(document.getElementById('cmpRate').value);
   const otR  = parseFloat(document.getElementById('cmpOtRate').value);
-
-  if (!from || !to) { showToast('Pick a date range'); return; }
-  if (from > to)    { showToast('"From" must be on or before "To"'); return; }
-  if (!rate||rate<=0) { showToast('Enter a regular rate'); return; }
-
+  if (!from || !to)         { showToast('Pick a date range'); return; }
+  if (from > to)             { showToast('"From" must be on or before "To"'); return; }
+  if (!rate||rate<=0)        { showToast('Enter a regular rate'); return; }
   const h = tsHoursInRange(from, to);
   const otRate = otR > 0 ? otR : rate * 1.5;
   const expected = h.reg * rate + h.ot * otRate;
-
   const paid = psEntries
     .filter(p => p.from >= from && p.to <= to)
     .reduce((s,p) => s + (p.amt||0), 0);
   const diff = paid - expected;
-
   document.getElementById('cmpHrs').textContent  = `${fmt(h.total)} hrs (reg ${fmt(h.reg)}, ot ${fmt(h.ot)})`;
   document.getElementById('cmpExp').textContent  = fmtM(expected);
   document.getElementById('cmpPaid').textContent = fmtM(paid);
   const cd = document.getElementById('cmpDiff');
   cd.textContent = (diff >= 0 ? '+' : '−') + fmtM(Math.abs(diff));
   cd.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
-
   const b = document.getElementById('cmpBadge');
-  if (Math.abs(diff) < 1)      { b.className = 'compare-badge cm-match'; b.textContent = '✓ Pay matches expected'; }
-  else if (diff > 0)           { b.className = 'compare-badge cm-over';  b.textContent = `Paid ${fmtM(Math.abs(diff))} more than expected`; }
-  else                          { b.className = 'compare-badge cm-under'; b.textContent = `Paid ${fmtM(Math.abs(diff))} less than expected`; }
-
+  if (Math.abs(diff) < 1)      { b.className = 'compare-pill cm-match'; b.textContent = '✓ Pay matches expected'; }
+  else if (diff > 0)            { b.className = 'compare-pill cm-over';  b.textContent = `Paid ${fmtM(Math.abs(diff))} more than expected`; }
+  else                           { b.className = 'compare-pill cm-under'; b.textContent = `Paid ${fmtM(Math.abs(diff))} less than expected`; }
   document.getElementById('cmpResult').classList.add('visible');
 }
 
@@ -2737,9 +2928,9 @@ function exportPsCsv() {
   downloadCsv('payslips.csv', rows);
 }
 
-// ════════════════════════════════════════════════════════════════════════
-//  PAY CALCULATOR
-// ════════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
+   PAY CALCULATOR
+   ════════════════════════════════════════════════════════════════════════ */
 function renderPayGlance() {
   const total = tsEntries.reduce((s,e)=>s+(e.reg||0)+(e.ot||0),0);
   const ot    = tsEntries.reduce((s,e)=>s+(e.ot||0),0);
@@ -2751,20 +2942,25 @@ function renderPayGlance() {
 }
 
 function onPaySourceChange() {
-  document.getElementById('manualWrap').style.display =
-    document.getElementById('paySource').value === 'manual' ? 'block' : 'none';
+  document.getElementById('manualWrap').style.display = document.getElementById('paySource').value === 'manual' ? 'flex' : 'none';
+  document.getElementById('rangePicker').style.display = document.getElementById('paySource').value === 'filtered' ? 'block' : 'none';
 }
 
 function getHoursForPay() {
   const src = document.getElementById('paySource').value;
-  if (src === 'alltime') return { reg: tsEntries.reduce((s,e)=>s+(e.reg||0),0), ot: tsEntries.reduce((s,e)=>s+(e.ot||0),0), label:'all-time' };
+  if (src === 'alltime') {
+    return { reg: tsEntries.reduce((s,e)=>s+(e.reg||0),0), ot: tsEntries.reduce((s,e)=>s+(e.ot||0),0), label:'all-time' };
+  }
   if (src === 'filtered') {
-    if (!tsFilterFrom||!tsFilterTo) { showToast('Apply a date filter in the Timesheet tab first'); return null; }
-    const f = tsEntries.filter(e=>e.date>=tsFilterFrom&&e.date<=tsFilterTo);
-    return { reg: f.reduce((s,e)=>s+(e.reg||0),0), ot: f.reduce((s,e)=>s+(e.ot||0),0), label:'filtered range' };
+    const from = document.getElementById('tsFrom').value;
+    const to = document.getElementById('tsTo').value;
+    if (!from || !to) { showToast('Set a From and To date'); return null; }
+    tsFilterFrom = from; tsFilterTo = to;
+    const h = tsHoursInRange(from, to);
+    return { reg: h.reg, ot: h.ot, label: `${dispDateShort(from)}–${dispDateShort(to)}` };
   }
   const h = parseFloat(document.getElementById('manualHrs').value);
-  if (!h||h<=0) { showToast('Enter hours for manual calculation'); return null; }
+  if (!h || h <= 0) { showToast('Enter hours for manual calculation'); return null; }
   return { reg: h, ot: 0, label: 'manual' };
 }
 
@@ -2772,20 +2968,19 @@ function calculatePay() {
   const hrs  = getHoursForPay(); if (!hrs) return;
   const rate = parseFloat(document.getElementById('payRate').value);
   const otR  = parseFloat(document.getElementById('otRate').value);
-  if (!rate||rate<=0) { showToast('Please enter a regular pay rate'); return; }
-
+  if (!rate || rate <= 0) { showToast('Enter a regular pay rate'); return; }
   const regPay = hrs.reg * rate;
-  const otPay  = hrs.ot > 0 ? hrs.ot * (otR>0?otR:rate*1.5) : 0;
+  const otPay  = hrs.ot > 0 ? hrs.ot * (otR > 0 ? otR : rate*1.5) : 0;
   const total  = regPay + otPay;
 
-  document.getElementById('regLabel').textContent = `Regular (${fmt(hrs.reg)} hrs × $${rate.toFixed(2)})`;
+  document.getElementById('regLabel').textContent = `Regular (${fmt(hrs.reg)} × ${fmtM(rate)})`;
   document.getElementById('regPay').textContent   = fmtM(regPay);
-  if (hrs.ot>0) {
-    const ur = otR>0?otR:rate*1.5;
-    document.getElementById('otLabel').textContent = `Overtime (${fmt(hrs.ot)} hrs × $${ur.toFixed(2)})`;
+  if (hrs.ot > 0) {
+    const ur = otR > 0 ? otR : rate*1.5;
+    document.getElementById('otLabel').textContent = `Overtime (${fmt(hrs.ot)} × ${fmtM(ur)})`;
     document.getElementById('otPay').textContent   = fmtM(otPay);
   } else {
-    document.getElementById('otLabel').textContent = 'Overtime pay';
+    document.getElementById('otLabel').textContent = 'Overtime';
     document.getElementById('otPay').textContent   = '—';
   }
   document.getElementById('hoursUsed').textContent = `${fmt(hrs.reg+hrs.ot)} hrs (${hrs.label})`;
@@ -2793,23 +2988,22 @@ function calculatePay() {
 
   const slip = parseFloat(document.getElementById('payslipAmt').value);
   const cw   = document.getElementById('compareWrap');
-  if (slip>0) {
+  if (slip > 0) {
     cw.style.display='block';
     const diff=slip-total, abs=Math.abs(diff);
     document.getElementById('payslipShow').textContent = fmtM(slip);
     document.getElementById('diffShow').textContent    = (diff>=0?'+':'−')+fmtM(abs);
     const b = document.getElementById('compareBadge');
-    if (abs<1)     { b.className='compare-badge cm-match'; b.textContent='✓ Payslip matches the calculation'; }
-    else if(diff>0){ b.className='compare-badge cm-over';  b.textContent=`Payslip is ${fmtM(abs)} more — possible bonus or deductions?`; }
-    else           { b.className='compare-badge cm-under'; b.textContent=`Payslip is ${fmtM(abs)} less — worth checking with payroll`; }
+    if (abs < 1)        { b.className='compare-pill cm-match'; b.textContent='✓ Payslip matches calculation'; }
+    else if (diff > 0)   { b.className='compare-pill cm-over';  b.textContent=`Payslip is ${fmtM(abs)} more`; }
+    else                 { b.className='compare-pill cm-under'; b.textContent=`Payslip is ${fmtM(abs)} less`; }
   } else { cw.style.display='none'; }
-
   document.getElementById('payResult').classList.add('visible');
 }
 
 </script>
 
-<!-- ── PWA: register service worker ──────────────────────────────────── -->
+<!-- Service worker registration -->
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', () => {
